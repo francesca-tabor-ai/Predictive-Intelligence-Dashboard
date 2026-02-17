@@ -1,0 +1,5 @@
+{
+  "name": "Predictive Intelligence Flywheel Dashboard",
+  "description": "A comprehensive strategic dashboard for managing the predictive intelligence lifecycle, featuring ROI modeling, strategy synthesis via Gemini, and data flywheel visualization.",
+  "requestFramePermissions": []
+}
