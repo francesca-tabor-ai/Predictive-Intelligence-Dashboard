@@ -1,8 +1,10 @@
-
-import React, { useState } from 'react';
-import { FileText, Loader2, Download, Edit3 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { FileText, Loader2, Download, Edit3, Eye, CheckCircle, FileDown, Presentation } from 'lucide-react';
 import { generateProposal } from '../services/openaiService';
-import { StrategyReport, FlywheelAnalysis, ArchitectureAnalysis, ROIReport } from '../types';
+import { StrategyReport, FlywheelAnalysis, ArchitectureAnalysis, ROIReport, Slide, SlideDeck } from '../types';
+import { parseSlides, validateSlides } from '../services/slideParser';
+import { exportToPDF, exportToPowerPoint } from '../services/exportEngine';
+import { SlidePreview } from './slides/SlidePreview';
 
 interface ProposalProps {
   strategyReport: StrategyReport | null;
@@ -10,6 +12,8 @@ interface ProposalProps {
   architectureReport: ArchitectureAnalysis | null;
   roiReport: ROIReport | null;
 }
+
+type ProposalStatus = 'draft' | 'approved' | 'rendered';
 
 export const Proposal: React.FC<ProposalProps> = ({
   strategyReport,
@@ -25,190 +29,30 @@ export const Proposal: React.FC<ProposalProps> = ({
   const [fromRole, setFromRole] = useState('');
   const [loading, setLoading] = useState(false);
   const [proposalContent, setProposalContent] = useState<string>('');
+  const [parsedSlides, setParsedSlides] = useState<Slide[]>([]);
+  const [status, setStatus] = useState<ProposalStatus>('draft');
+  const [showPreview, setShowPreview] = useState(false);
+  const [exporting, setExporting] = useState<'pdf' | 'pptx' | null>(null);
+  const [parseErrors, setParseErrors] = useState<string[]>([]);
 
-  const generatePDF = (content: string, filename: string) => {
-    // Parse slides from content
-    const slides = content.split('=== SLIDE ===').filter(slide => slide.trim());
-    
-    // Create HTML content with proper styling
-    const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>${filename}</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;700;900&display=swap');
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    @media print {
-      @page {
-        size: A4 landscape;
-        margin: 0;
+  // Parse slides whenever proposal content changes
+  useEffect(() => {
+    if (proposalContent) {
+      const slides = parseSlides(proposalContent);
+      setParsedSlides(slides);
+      
+      const validation = validateSlides(slides);
+      setParseErrors(validation.errors);
+      
+      // Reset status if slides change
+      if (status === 'approved' || status === 'rendered') {
+        setStatus('draft');
       }
-      .slide {
-        page-break-after: always;
-        page-break-inside: avoid;
-      }
+    } else {
+      setParsedSlides([]);
+      setParseErrors([]);
     }
-    body {
-      font-family: 'Inter', sans-serif;
-      background: #FFFFFF;
-      color: #000000;
-      line-height: 1.6;
-    }
-    .slide {
-      min-height: 100vh;
-      padding: 64px;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      background: #FFFFFF;
-    }
-    .slide-header {
-      margin-bottom: 48px;
-    }
-    .metadata {
-      font-weight: 700;
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.2em;
-      color: #94a3b8;
-      margin-bottom: 16px;
-    }
-    h1 {
-      font-weight: 900;
-      font-size: 64px;
-      letter-spacing: -0.02em;
-      margin-bottom: 24px;
-      color: #000000;
-      line-height: 1.1;
-    }
-    h2 {
-      font-weight: 700;
-      font-size: 24px;
-      margin-bottom: 16px;
-      color: #000000;
-    }
-    h3 {
-      font-weight: 700;
-      font-size: 20px;
-      margin-bottom: 12px;
-      color: #000000;
-    }
-    p {
-      font-weight: 300;
-      font-size: 18px;
-      color: #475569;
-      margin-bottom: 16px;
-      line-height: 1.8;
-    }
-    ul, ol {
-      font-weight: 300;
-      font-size: 18px;
-      color: #475569;
-      margin-left: 24px;
-      margin-bottom: 16px;
-    }
-    li {
-      margin-bottom: 8px;
-      line-height: 1.8;
-    }
-    .gradient {
-      background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .accent-line {
-      width: 32px;
-      height: 2px;
-      background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
-      margin-bottom: 24px;
-    }
-    code, pre {
-      font-family: 'Courier New', monospace;
-      font-size: 14px;
-      background: #F1F5F9;
-      padding: 16px;
-      border-radius: 24px;
-      overflow-x: auto;
-      white-space: pre-wrap;
-      color: #020617;
-    }
-    .highlight {
-      background: #F1F5F9;
-      padding: 24px;
-      border-radius: 32px;
-      border: 1px solid #E2E8F0;
-    }
-  </style>
-</head>
-<body>
-  ${slides.map((slide, index) => {
-    if (!slide.trim()) return '';
-    
-    // Basic formatting - convert markdown-like syntax to HTML
-    let formattedSlide = slide.trim();
-    
-    // Convert headers
-    formattedSlide = formattedSlide.replace(/^# (.*$)/gim, '<h1>$1</h1>');
-    formattedSlide = formattedSlide.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-    formattedSlide = formattedSlide.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-    
-    // Convert bullet points
-    formattedSlide = formattedSlide.replace(/^• (.*$)/gim, '<li>$1</li>');
-    formattedSlide = formattedSlide.replace(/^- (.*$)/gim, '<li>$1</li>');
-    
-    // Wrap consecutive list items in ul tags
-    formattedSlide = formattedSlide.replace(/(<li>.*<\/li>\n?)+/g, (match) => {
-      return '<ul>' + match + '</ul>';
-    });
-    
-    // Convert line breaks
-    formattedSlide = formattedSlide.replace(/\n\n/g, '</p><p>');
-    formattedSlide = formattedSlide.replace(/\n/g, '<br>');
-    
-    // Wrap in paragraph if not already wrapped
-    if (!formattedSlide.startsWith('<h') && !formattedSlide.startsWith('<ul')) {
-      formattedSlide = '<p>' + formattedSlide + '</p>';
-    }
-    
-    return `<div class="slide">
-      <div class="slide-header">
-        <div class="accent-line"></div>
-        <div class="metadata">Slide ${index + 1}</div>
-      </div>
-      <div class="slide-content">
-        ${formattedSlide}
-      </div>
-    </div>`;
-  }).join('')}
-</body>
-</html>`;
-
-    // Create blob and download HTML file
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${filename}.html`;
-    link.click();
-    URL.revokeObjectURL(url);
-
-    // Open print dialog for PDF conversion
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(htmlContent);
-      printWindow.document.close();
-      setTimeout(() => {
-        printWindow.print();
-      }, 500);
-    }
-  };
+  }, [proposalContent]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -234,6 +78,7 @@ export const Proposal: React.FC<ProposalProps> = ({
       );
 
       setProposalContent(presentationContent);
+      setStatus('draft');
     } catch (error) {
       console.error("Proposal creation failed", error);
       alert('Failed to generate proposal. Please check your OpenAI API key and try again.');
@@ -242,10 +87,62 @@ export const Proposal: React.FC<ProposalProps> = ({
     }
   };
 
-  const handleExportPDF = () => {
-    if (!proposalContent) return;
-    const filename = `Predictive_Intelligence_Flywheel_Dashboard_${toCompany.replace(/\s+/g, '_')}`;
-    generatePDF(proposalContent, filename);
+  const handlePreview = () => {
+    if (parsedSlides.length === 0) {
+      alert('No slides to preview. Please generate or edit the proposal content first.');
+      return;
+    }
+    setShowPreview(true);
+  };
+
+  const handleApprove = () => {
+    if (parseErrors.length > 0) {
+      alert(`Please fix the following errors before approving:\n${parseErrors.join('\n')}`);
+      return;
+    }
+    if (parsedSlides.length === 0) {
+      alert('No slides to approve. Please generate or edit the proposal content first.');
+      return;
+    }
+    setStatus('approved');
+  };
+
+  const handleExportPDF = async () => {
+    if (parsedSlides.length === 0) {
+      alert('No slides to export. Please generate or edit the proposal content first.');
+      return;
+    }
+    
+    setExporting('pdf');
+    try {
+      const filename = `Predictive_Intelligence_Flywheel_Dashboard_${toCompany.replace(/\s+/g, '_')}`;
+      await exportToPDF(parsedSlides, filename);
+      setStatus('rendered');
+    } catch (error) {
+      console.error('PDF export failed:', error);
+      alert('Failed to export PDF. Please try again.');
+    } finally {
+      setExporting(null);
+    }
+  };
+
+  const handleExportPPTX = async () => {
+    if (parsedSlides.length === 0) {
+      alert('No slides to export. Please generate or edit the proposal content first.');
+      return;
+    }
+    
+    setExporting('pptx');
+    try {
+      const filename = `Predictive_Intelligence_Flywheel_Dashboard_${toCompany.replace(/\s+/g, '_')}`;
+      await exportToPowerPoint(parsedSlides, filename);
+      setStatus('rendered');
+    } catch (error) {
+      console.error('PowerPoint export failed:', error);
+      alert('Failed to export PowerPoint. Please ensure pptxgenjs is installed: npm install pptxgenjs');
+    } finally {
+      setExporting(null);
+    }
   };
 
   return (
@@ -259,7 +156,7 @@ export const Proposal: React.FC<ProposalProps> = ({
           Proposal
         </h1>
         <p className="text-xl text-slate-500 font-light">
-          Create and customize your proposal.
+          Create and customize your proposal with structured slide rendering.
         </p>
       </header>
 
@@ -393,24 +290,96 @@ export const Proposal: React.FC<ProposalProps> = ({
         <div className="flex-1 space-y-6">
           {proposalContent ? (
             <div className="space-y-6">
+              {/* Status and Actions Bar */}
               <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-3xl font-bold text-black tracking-tight mb-2">
-                    Proposal Content
-                  </h2>
-                  <p className="text-slate-500 text-sm font-light">
-                    Edit the proposal content below, then export as PDF
-                  </p>
+                <div className="flex items-center gap-4">
+                  <div>
+                    <h2 className="text-3xl font-bold text-black tracking-tight mb-2">
+                      Proposal Content
+                    </h2>
+                    <div className="flex items-center gap-3">
+                      <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                        status === 'draft' ? 'bg-slate-100 text-slate-600' :
+                        status === 'approved' ? 'bg-green-100 text-green-700' :
+                        'bg-blue-100 text-blue-700'
+                      }`}>
+                        {status.toUpperCase()}
+                      </span>
+                      <span className="text-sm text-slate-500">
+                        {parsedSlides.length} slide{parsedSlides.length !== 1 ? 's' : ''} parsed
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <button
-                  onClick={handleExportPDF}
-                  className="px-6 py-3 bg-black hover:bg-slate-800 text-white rounded-[20px] font-bold flex items-center gap-3 transition-all"
-                >
-                  <Download className="w-4 h-4" />
-                  Export PDF
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handlePreview}
+                    disabled={parsedSlides.length === 0}
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-black rounded-[20px] font-bold flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Eye className="w-4 h-4" />
+                    Preview
+                  </button>
+                  <button
+                    onClick={handleApprove}
+                    disabled={parsedSlides.length === 0 || parseErrors.length > 0 || status === 'approved'}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-[20px] font-bold flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    Approve
+                  </button>
+                  <div className="relative">
+                    <button
+                      onClick={handleExportPDF}
+                      disabled={parsedSlides.length === 0 || exporting !== null}
+                      className="px-4 py-2 bg-black hover:bg-slate-800 text-white rounded-[20px] font-bold flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {exporting === 'pdf' ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Exporting...
+                        </>
+                      ) : (
+                        <>
+                          <FileDown className="w-4 h-4" />
+                          PDF
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <button
+                    onClick={handleExportPPTX}
+                    disabled={parsedSlides.length === 0 || exporting !== null}
+                    className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-[20px] font-bold flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {exporting === 'pptx' ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Exporting...
+                      </>
+                    ) : (
+                      <>
+                        <Presentation className="w-4 h-4" />
+                        PPTX
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
-              
+
+              {/* Parse Errors */}
+              {parseErrors.length > 0 && (
+                <div className="bg-red-50 border border-red-200 rounded-[24px] p-4">
+                  <div className="text-sm font-bold text-red-800 mb-2">Parse Errors:</div>
+                  <ul className="text-xs text-red-700 space-y-1 list-disc list-inside">
+                    {parseErrors.map((error, index) => (
+                      <li key={index}>{error}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Editable Content */}
               <div className="bg-white border border-slate-200 rounded-[32px] p-8 shadow-sm">
                 <div className="flex items-center gap-2 mb-4">
                   <Edit3 className="w-4 h-4 text-slate-400" />
@@ -424,8 +393,10 @@ export const Proposal: React.FC<ProposalProps> = ({
                   className="w-full h-[600px] px-6 py-5 rounded-[24px] bg-slate-50 border border-slate-100 focus:bg-white focus:ring-2 focus:ring-black outline-none transition-all text-sm leading-relaxed font-mono resize-none"
                   placeholder="Proposal content will appear here after generation..."
                 />
-                <div className="mt-4 text-xs text-slate-400">
-                  <p>💡 Tip: Use "=== SLIDE ===" to separate slides. Edit the content as needed, then click "Export PDF" to generate the presentation.</p>
+                <div className="mt-4 text-xs text-slate-400 space-y-1">
+                  <p>💡 Tip: Use "=== SLIDE ===" to separate slides. Edit the content as needed.</p>
+                  <p>📋 Format: Include "Slide Type:", "Title:", "Body content:", and "Key data highlights:" for best results.</p>
+                  <p>👁️ Click "Preview" to see rendered slides, then "Approve" and export as PDF or PowerPoint.</p>
                 </div>
               </div>
             </div>
@@ -441,6 +412,14 @@ export const Proposal: React.FC<ProposalProps> = ({
           )}
         </div>
       </div>
+
+      {/* Preview Modal */}
+      {showPreview && (
+        <SlidePreview
+          slides={parsedSlides}
+          onClose={() => setShowPreview(false)}
+        />
+      )}
     </div>
   );
 };

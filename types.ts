@@ -171,3 +171,43 @@ export interface ValuationReport {
     justification: string;
   };
 }
+
+// Slide system types
+export type SlideType = 
+  | 'cover-slide'
+  | 'executive-summary'
+  | 'architecture'
+  | 'roi'
+  | 'flywheel'
+  | 'strategy'
+  | 'roadmap'
+  | 'conclusion'
+  | 'generic';
+
+export interface SlideHighlight {
+  label: string;
+  value: string;
+}
+
+export interface Slide {
+  id: string;
+  type: SlideType;
+  title: string;
+  body: string[];
+  highlights?: SlideHighlight[];
+  metadata?: Record<string, any>;
+}
+
+export interface SlideDeck {
+  proposalId?: string;
+  status: 'draft' | 'approved' | 'rendered';
+  slides: Slide[];
+  metadata?: {
+    toCompany?: string;
+    toPerson?: string;
+    toRole?: string;
+    fromCompany?: string;
+    fromPerson?: string;
+    fromRole?: string;
+  };
+}
