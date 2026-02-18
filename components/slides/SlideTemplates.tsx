@@ -236,25 +236,226 @@ const AccentLine: React.FC = () => {
 
 /**
  * Cover Slide Template
+ * Dark-themed slide with gradient background, white text, top-left alignment
  */
 export const CoverSlideTemplate: React.FC<SlideTemplateProps> = ({ slide, slideNumber }) => {
+  // Parse body content to extract preparation details and author info
+  const parseCoverContent = (body: string[]) => {
+    let preparedFor = '';
+    let attention = '';
+    let authorName = '';
+    let authorRole = '';
+    let authorCompany = '';
+
+    let foundPreparedBy = false;
+    const authorLines: string[] = [];
+
+    body.forEach((line) => {
+      const trimmedLine = line.trim();
+      const lowerLine = trimmedLine.toLowerCase();
+      
+      if (lowerLine.includes('prepared for')) {
+        preparedFor = trimmedLine.replace(/prepared for\s*/i, '').trim();
+      } else if (lowerLine.includes('attention:')) {
+        attention = trimmedLine.replace(/attention:\s*/i, '').trim();
+      } else if (lowerLine.includes('prepared by') || lowerLine === 'prepared by') {
+        foundPreparedBy = true;
+      } else if (foundPreparedBy) {
+        // Collect all lines after "Prepared by" as potential author info
+        if (trimmedLine && !lowerLine.includes('prepared') && !lowerLine.includes('attention')) {
+          authorLines.push(trimmedLine);
+        }
+      } else if (!preparedFor && !attention && trimmedLine) {
+        // If we haven't found prepared for/attention yet, check if this line matches
+        if (lowerLine.includes('prepared for')) {
+          preparedFor = trimmedLine.replace(/prepared for\s*/i, '').trim();
+        } else if (lowerLine.includes('attention')) {
+          attention = trimmedLine.replace(/attention:\s*/i, '').trim();
+        }
+      }
+    });
+
+    // Parse author lines: first is name, second is role, third is company
+    if (authorLines.length > 0) {
+      authorName = authorLines[0];
+      if (authorLines.length > 1) {
+        authorRole = authorLines[1];
+      }
+      if (authorLines.length > 2) {
+        authorCompany = authorLines[2];
+      }
+    }
+
+    // Fallback: if no structured parsing worked, try to extract from body directly
+    if (!preparedFor && !attention && body.length > 0) {
+      body.forEach((line) => {
+        const lowerLine = line.toLowerCase();
+        if (lowerLine.includes('bt group') || lowerLine.includes('prepared for')) {
+          const match = line.match(/prepared for\s*(.+)/i) || line.match(/(.+)/);
+          if (match) preparedFor = match[1].trim();
+        }
+        if (lowerLine.includes('ian mitchell') || lowerLine.includes('attention')) {
+          const match = line.match(/attention:\s*(.+)/i) || line.match(/(.+)/);
+          if (match) attention = match[1].trim();
+        }
+        if (lowerLine.includes('francesca tabor') && !authorName) {
+          authorName = line.trim();
+        }
+        if (lowerLine.includes('chief ai architect') && !authorRole) {
+          authorRole = line.trim();
+        }
+        if (lowerLine.includes('ai growth hub') && !authorCompany) {
+          authorCompany = line.trim();
+        }
+      });
+    }
+
+    return { preparedFor, attention, authorName, authorRole, authorCompany };
+  };
+
+  const { preparedFor, attention, authorName, authorRole, authorCompany } = parseCoverContent(slide.body);
+
+  // Split title if it's the full title
+  const titleParts = slide.title.includes('Flywheel') 
+    ? ['Predictive Intelligence', 'Flywheel Dashboard']
+    : [slide.title];
+
   return (
-    <SlideCanvas>
-      <div className="flex flex-col justify-center items-center h-full text-center">
-        <AccentLine />
-        <MetadataLabel>Slide {slideNumber || 1}</MetadataLabel>
-        <Title className="mb-8">
-          {slide.title}
-        </Title>
-        {slide.body.length > 0 && (
-          <div className="space-y-4 max-w-2xl">
-            {slide.body.map((line, index) => (
-              <BodyText key={index}>{line}</BodyText>
+    <div 
+      className="min-h-screen flex flex-col relative"
+      style={{
+        fontFamily: theme.fonts.primary,
+        padding: `${theme.layout.slidePadding}px`,
+        background: 'radial-gradient(ellipse at center, rgba(15, 23, 42, 0.4) 0%, rgba(2, 6, 23, 1) 50%, rgba(2, 6, 23, 1) 100%), linear-gradient(180deg, rgba(2, 6, 23, 1) 0%, rgba(15, 23, 42, 0.9) 50%, rgba(2, 6, 23, 1) 100%)',
+        color: '#FFFFFF'
+      }}
+    >
+      <div className="flex-1 flex flex-col justify-start pt-12">
+        {/* Title Section - Top Left */}
+        <div className="mb-8">
+          <h1 
+            className="mb-4"
+            style={{
+              fontSize: `${theme.typography.display.fontSize}px`,
+              fontWeight: theme.typography.display.fontWeight,
+              letterSpacing: `${theme.typography.display.letterSpacing}em`,
+              lineHeight: theme.typography.display.lineHeight,
+              color: '#FFFFFF'
+            }}
+          >
+            {titleParts.map((part, index) => (
+              <React.Fragment key={index}>
+                {part}
+                {index < titleParts.length - 1 && <br />}
+              </React.Fragment>
             ))}
+          </h1>
+          
+          {/* Wide Gradient Accent Line - matches title width */}
+          <div 
+            className="mb-4"
+            style={{
+              width: 'fit-content',
+              minWidth: '400px',
+              maxWidth: '700px',
+              height: '2px',
+              background: `linear-gradient(90deg, ${theme.colors.gradient.purple} 0%, ${theme.colors.gradient.orange} 100%)`
+            }}
+          />
+          
+          {/* DASHBOARD Subtitle */}
+          <div 
+            style={{
+              fontSize: `${theme.typography.metadata.fontSize}px`,
+              fontWeight: theme.typography.metadata.fontWeight,
+              textTransform: theme.typography.metadata.textTransform,
+              letterSpacing: `${theme.typography.metadata.letterSpacing}em`,
+              color: '#FFFFFF'
+            }}
+          >
+            DASHBOARD
           </div>
-        )}
+        </div>
+
+        {/* Preparation Details */}
+        <div className="space-y-2 mb-8">
+          {preparedFor && (
+            <p 
+              style={{
+                fontSize: `${theme.typography.body.fontSize}px`,
+                fontWeight: theme.typography.body.fontWeight,
+                lineHeight: theme.typography.body.lineHeight,
+                color: '#FFFFFF'
+              }}
+            >
+              Prepared for {preparedFor}
+            </p>
+          )}
+          {attention && (
+            <p 
+              style={{
+                fontSize: `${theme.typography.body.fontSize}px`,
+                fontWeight: theme.typography.body.fontWeight,
+                lineHeight: theme.typography.body.lineHeight,
+                color: '#FFFFFF'
+              }}
+            >
+              Attention: {attention}
+            </p>
+          )}
+        </div>
+
+        {/* Separator Line */}
+        <div 
+          className="mb-6"
+          style={{
+            width: '200px',
+            height: '1px',
+            background: '#FFFFFF',
+            opacity: 0.3
+          }}
+        />
+
+        {/* Author Information */}
+        <div className="space-y-2">
+          {authorName && (
+            <p 
+              style={{
+                fontSize: `${theme.typography.section.fontSize}px`,
+                fontWeight: theme.typography.section.fontWeight,
+                color: '#FFFFFF'
+              }}
+            >
+              {authorName}
+            </p>
+          )}
+          {authorRole && (
+            <p 
+              style={{
+                fontSize: `${theme.typography.body.fontSize}px`,
+                fontWeight: theme.typography.body.fontWeight,
+                lineHeight: theme.typography.body.lineHeight,
+                color: '#FFFFFF'
+              }}
+            >
+              {authorRole}
+            </p>
+          )}
+          {authorCompany && (
+            <p 
+              style={{
+                fontSize: `${theme.typography.body.fontSize}px`,
+                fontWeight: theme.typography.body.fontWeight,
+                lineHeight: theme.typography.body.lineHeight,
+                color: '#FFFFFF'
+              }}
+            >
+              {authorCompany}
+            </p>
+          )}
+        </div>
       </div>
-    </SlideCanvas>
+    </div>
   );
 };
 
