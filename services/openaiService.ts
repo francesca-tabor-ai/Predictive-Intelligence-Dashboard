@@ -851,7 +851,26 @@ Explain compounding advantage clearly.
 
 Slide 5: Predictive Use Cases
 
-Include quantified economic impact from the strategy report.
+Format each use case title as bold, standalone headers (no bullets, no numbering):
+**Household Churn Prediction**
+**Network Congestion Forecasts**
+**SME Digital Behavior and Credit Risk**
+
+Add sub-bullet points under each bold use case title for Impact and Metrics, formatted as follows:
+
+**Household Churn Prediction**
+ • Impact: £125 million in retained revenue
+ • Metrics: Churn rate, Customer lifetime value
+
+**Network Congestion Forecasts**
+ • Impact: £50 million in cost savings
+ • Metrics: Network downtime, Operational costs
+
+**SME Digital Behavior and Credit Risk**
+ • Impact: £25 million in loss prevention
+ • Metrics: Default rate, Loan recovery rate
+
+Ensure the slide uses bold headers for use cases and indented sub-bullets only, with no numbering and no top-level bullets. Do not include a heading "Key Use Cases and Economic Impact:" or similar.
 
 ---
 
