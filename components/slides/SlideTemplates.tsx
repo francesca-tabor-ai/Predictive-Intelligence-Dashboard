@@ -639,6 +639,154 @@ export const ROISlideTemplate: React.FC<SlideTemplateProps> = ({ slide, slideNum
 };
 
 /**
+ * Conclusion Slide Template
+ * Dark-themed slide with centered content, gradient background, and presenter signature
+ */
+export const ConclusionSlideTemplate: React.FC<SlideTemplateProps> = ({ slide, slideNumber }) => {
+  // Parse body content to extract presenter info
+  const parseConclusionContent = (body: string[]) => {
+    let authorName = '';
+    let authorRole = '';
+    let authorCompany = '';
+
+    let foundSenderSignature = false;
+    const authorLines: string[] = [];
+
+    body.forEach((line) => {
+      const trimmedLine = line.trim();
+      const lowerLine = trimmedLine.toLowerCase();
+      
+      if (lowerLine.includes('sender signature:') || lowerLine.includes('prepared by')) {
+        foundSenderSignature = true;
+      } else if (foundSenderSignature) {
+        // Collect all lines after "Sender Signature:" as author info
+        if (trimmedLine && !lowerLine.includes('sender') && !lowerLine.includes('signature')) {
+          authorLines.push(trimmedLine);
+        }
+      }
+    });
+
+    // Parse author lines: first is name, second is role, third is company
+    if (authorLines.length > 0) {
+      authorName = authorLines[0];
+      if (authorLines.length > 1) {
+        authorRole = authorLines[1];
+      }
+      if (authorLines.length > 2) {
+        authorCompany = authorLines[2];
+      }
+    }
+
+    // Fallback: try to find author info by common patterns
+    if (!authorName) {
+      body.forEach((line) => {
+        const lowerLine = line.toLowerCase();
+        if (lowerLine.includes('francesca tabor') && !authorName) {
+          authorName = line.trim();
+        }
+        if (lowerLine.includes('chief ai architect') && !authorRole) {
+          authorRole = line.trim();
+        }
+        if (lowerLine.includes('ai growth hub') && !authorCompany) {
+          authorCompany = line.trim();
+        }
+      });
+    }
+
+    return { authorName, authorRole, authorCompany };
+  };
+
+  const { authorName, authorRole, authorCompany } = parseConclusionContent(slide.body);
+
+  // Use title, but prefer "Strategic Call to Action" for conclusion slides
+  // Check if title contains conclusion-related terms and replace with call to action
+  const displayTitle = slide.title && 
+    (slide.title.toLowerCase().includes('conclusion') || 
+     slide.title.toLowerCase().includes('next steps'))
+    ? 'Strategic Call to Action'
+    : (slide.title || 'Strategic Call to Action');
+
+  return (
+    <div 
+      className="min-h-screen flex flex-col items-center justify-center"
+      style={{
+        fontFamily: theme.fonts.primary,
+        padding: `${theme.layout.slidePadding}px`,
+        background: 'radial-gradient(ellipse at center, rgba(15, 23, 42, 0.4) 0%, rgba(2, 6, 23, 1) 50%, rgba(2, 6, 23, 1) 100%), linear-gradient(180deg, rgba(2, 6, 23, 1) 0%, rgba(15, 23, 42, 0.9) 50%, rgba(2, 6, 23, 1) 100%)',
+        color: '#FFFFFF'
+      }}
+    >
+      <div className="flex flex-col items-center justify-center text-center max-w-4xl">
+        {/* Title */}
+        <h1 
+          className="mb-6"
+          style={{
+            fontSize: `${theme.typography.display.fontSize}px`,
+            fontWeight: theme.typography.display.fontWeight,
+            letterSpacing: `${theme.typography.display.letterSpacing}em`,
+            lineHeight: theme.typography.display.lineHeight,
+            color: '#FFFFFF'
+          }}
+        >
+          {displayTitle}
+        </h1>
+        
+        {/* Gradient Accent Line - Centered */}
+        <div 
+          className="mb-8"
+          style={{
+            width: 'fit-content',
+            minWidth: '300px',
+            maxWidth: '500px',
+            height: '2px',
+            background: `linear-gradient(90deg, ${theme.colors.gradient.purple} 0%, ${theme.colors.gradient.orange} 100%)`
+          }}
+        />
+
+        {/* Presenter Information - Centered */}
+        {authorName && (
+          <div className="space-y-2 mt-8">
+            <p 
+              style={{
+                fontSize: `${theme.typography.section.fontSize}px`,
+                fontWeight: theme.typography.section.fontWeight,
+                color: '#FFFFFF'
+              }}
+            >
+              {authorName}
+            </p>
+            {authorRole && (
+              <p 
+                style={{
+                  fontSize: `${theme.typography.body.fontSize}px`,
+                  fontWeight: theme.typography.body.fontWeight,
+                  lineHeight: theme.typography.body.lineHeight,
+                  color: '#FFFFFF'
+                }}
+              >
+                {authorRole}
+              </p>
+            )}
+            {authorCompany && (
+              <p 
+                style={{
+                  fontSize: `${theme.typography.body.fontSize}px`,
+                  fontWeight: theme.typography.body.fontWeight,
+                  lineHeight: theme.typography.body.lineHeight,
+                  color: '#FFFFFF'
+                }}
+              >
+                {authorCompany}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+/**
  * Generic Template (default)
  */
 export const GenericSlideTemplate: React.FC<SlideTemplateProps> = ({ slide, slideNumber }) => {
@@ -669,7 +817,7 @@ export const slideTemplates: Record<string, React.FC<SlideTemplateProps>> = {
   'flywheel': GenericSlideTemplate,
   'strategy': GenericSlideTemplate,
   'roadmap': GenericSlideTemplate,
-  'conclusion': GenericSlideTemplate,
+  'conclusion': ConclusionSlideTemplate,
   'generic': GenericSlideTemplate
 };
 
