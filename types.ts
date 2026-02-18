@@ -6,7 +6,8 @@ export enum NavigationTab {
   PREDICTION_STRATEGY = 'prediction-strategy',
   DATA_FLYWHEEL = 'data-flywheel',
   ARCHITECTURE = 'architecture',
-  ROI_CALCULATOR = 'roi-calculator'
+  ROI_CALCULATOR = 'roi-calculator',
+  PROPOSAL = 'proposal'
 }
 
 export interface PredictionOpportunity {

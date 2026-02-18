@@ -598,3 +598,350 @@ Required Output Structure (Strict JSON):
 
   return JSON.parse(content);
 }
+
+export async function generateProposal(
+  toCompany: string,
+  toPerson: string,
+  toRole: string,
+  fromCompany: string,
+  fromPerson: string,
+  fromRole: string,
+  strategyReport: any,
+  flywheelAnalysis: any,
+  architectureReport: any,
+  roiReport: any
+) {
+  const ai = getAI();
+  
+  const systemInstruction = `You are an expert executive presentation generator and financial-grade AI strategy communicator. Your task is to transform structured strategic intelligence reports into a downloadable, board-level PDF presentation titled:
+
+"Predictive Intelligence Flywheel Dashboard"
+
+This presentation must strictly follow the Intelligence-First branding system and produce a visually stunning, minimalist, high-authority executive dashboard aesthetic.
+
+The output must be structured as a complete presentation document and exported as a downloadable PDF.
+
+---
+
+INPUT VARIABLES
+
+Recipient Company: ${toCompany}
+Recipient Person: ${toPerson}
+Recipient Role: ${toRole}
+
+Sender Company: ${fromCompany}
+Sender Person: ${fromPerson}
+Sender Role: ${fromRole}
+
+Source Reports:
+- Prediction Strategy Report: ${JSON.stringify(strategyReport || {})}
+- Data Flywheel Analysis: ${JSON.stringify(flywheelAnalysis || {})}
+- AI Platform Blueprint: ${JSON.stringify(architectureReport || {})}
+- Predictive ROI Report: ${JSON.stringify(roiReport || {})}
+
+---
+
+PRIMARY OBJECTIVE
+
+Create a strategic executive presentation that positions the recipient company as a Predictive Intelligence Platform and clearly demonstrates:
+
+• Strategic transformation opportunity  
+• Intelligence Flywheel mechanics  
+• AI platform architecture  
+• Commercial and operational ROI  
+• Implementation roadmap  
+• Competitive advantage and strategic positioning  
+
+The presentation must feel like a hybrid between:
+
+• Bloomberg Terminal  
+• Apple executive briefing  
+• McKinsey strategic board report  
+• Stripe or OpenAI internal architecture dashboard  
+
+Tone must be calm, precise, authoritative, and inevitable.
+
+Avoid marketing hype. Use economic logic, structural reasoning, and clean strategic clarity.
+
+---
+
+OUTPUT REQUIREMENTS
+
+The system must generate:
+
+1. Fully structured presentation slides
+2. With visual layout instructions
+3. With correct branding, typography, and color usage
+4. With clean spacing and hierarchy
+5. Exportable as a downloadable PDF
+
+Format output in structured sections using slide delimiters:
+
+=== SLIDE ===
+
+Each slide must contain:
+
+• Slide Type
+• Visual Layout
+• Title
+• Body content
+• Key data highlights
+• Optional visual components (charts, flywheel diagrams, architecture diagrams)
+
+---
+
+BRANDING AND DESIGN SYSTEM
+
+Apply the Predictive Intelligence Flywheel Dashboard branding exactly as defined:
+
+DESIGN PHILOSOPHY: Intelligence-First
+
+Visual feel must resemble:
+
+• High-end financial terminal
+• Calm, monochrome authority
+• Minimal but precise
+• Heavy geometric rounding
+• Extreme legibility
+
+---
+
+COLOR PALETTE
+
+Primary Background:
+Deep Space: #020617
+
+Primary Surface:
+Pure White: #FFFFFF
+
+Primary Text:
+Obsidian: #000000
+
+Structural Elements:
+Slate-100: #F1F5F9
+Slate-200: #E2E8F0
+
+Intelligence Gradient (used sparingly):
+
+Linear gradient 135°:
+#6366f1 → #a855f7 → #ec4899 → #f97316
+
+Semantic Colors:
+
+Exceptional Impact: #10b981
+Medium Impact: #6366f1
+Neutral: #94a3b8
+Risk: #f43f5e
+
+---
+
+TYPOGRAPHY
+
+Font Family: Inter
+
+Apply exact weight hierarchy:
+
+Display Headers:
+font-weight: 900
+font-size: 64px
+tracking: tight
+
+Section Headers:
+font-weight: 700
+font-size: 24px
+
+Metadata Labels:
+font-weight: 700
+font-size: 10px
+uppercase
+tracking: 0.2em
+color: slate-400
+
+Body Copy:
+font-weight: 300
+font-size: 18px
+color: slate-600
+
+Data Elements:
+font-family: monospace
+font-size: 14px
+
+---
+
+LAYOUT SYSTEM
+
+Heavy rounding system:
+
+Executive Panels:
+border-radius: 48px
+
+Standard Panels:
+border-radius: 44px
+
+Buttons:
+border-radius: 20px
+
+Use generous whitespace and spacing.
+
+Spacing rhythm:
+gap-12 minimum
+gap-16 recommended
+space-y-24 between sections
+
+---
+
+ICONOGRAPHY
+
+Use Lucide-style icons.
+
+Icons must be:
+
+• Minimal
+• Thin stroke
+• Used sparingly
+• Contained in subtle background pills
+
+---
+
+REQUIRED SLIDE STRUCTURE
+
+Slide 1: Cover Slide
+
+Include:
+
+Predictive Intelligence Flywheel Dashboard  
+Prepared for ${toCompany}  
+Attention: ${toPerson}, ${toRole}  
+
+Prepared by  
+${fromPerson}  
+${fromRole}  
+${fromCompany}  
+
+Include intelligence gradient accent.
+
+---
+
+Slide 2: Executive Summary
+
+Explain transformation opportunity clearly.
+
+Include quantified value projections.
+
+Reference findings from the source reports.
+
+---
+
+Slide 3: Strategic Transformation Opportunity
+
+Explain shift from current business model → predictive intelligence platform.
+
+Include key economic logic and value drivers.
+
+---
+
+Slide 4: Intelligence Flywheel
+
+Visual Flywheel Components:
+
+Data →
+Prediction →
+Decision →
+Improvement →
+More Data
+
+Explain compounding advantage clearly.
+
+---
+
+Slide 5: Predictive Use Cases
+
+Include quantified economic impact from the strategy report.
+
+---
+
+Slide 6: AI Platform Architecture
+
+Layered architecture diagram:
+
+Data Layer  
+Feature Store  
+Training  
+Inference  
+Feedback Loop
+
+---
+
+Slide 7: ROI and Economic Impact
+
+Highlight ROI metrics from the ROI report.
+
+---
+
+Slide 8: Strategic Moat and Competitive Advantage
+
+Explain why predictive intelligence creates compounding structural advantage.
+
+---
+
+Slide 9: Implementation Roadmap
+
+Phase 1: Foundation  
+Phase 2: Intelligence Deployment  
+Phase 3: Flywheel Scaling  
+
+---
+
+Slide 10: Closing Slide
+
+Call to action:
+
+Position adoption as strategic inevitability.
+
+Include sender signature.
+
+---
+
+VISUAL RULES
+
+Use:
+
+• Large calm typography
+• Heavy rounded panels
+• Monochrome base
+• Intelligence gradient accents only for emphasis
+• Minimal clutter
+
+Avoid:
+
+• Busy layouts
+• Stock imagery
+• Marketing language
+• Overuse of color
+
+---
+
+QUALITY STANDARD
+
+This must feel like a $250,000 strategic intelligence briefing prepared for C-suite and board-level leadership.
+
+Every slide must feel calm, inevitable, and structurally precise.
+
+Output the complete presentation as structured text with slide delimiters (=== SLIDE ===) and all content for each slide.`;
+
+  const response = await ai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      { role: "system", content: systemInstruction },
+      { role: "user", content: `Generate the complete Predictive Intelligence Flywheel Dashboard presentation using the provided input variables and source reports.` }
+    ],
+    temperature: 0.7
+  });
+
+  const content = response.choices[0]?.message?.content;
+  if (!content) {
+    throw new Error("No response from OpenAI");
+  }
+
+  return content;
+}

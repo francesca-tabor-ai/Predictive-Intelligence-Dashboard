@@ -9,6 +9,7 @@ import { PredictionStrategy } from './components/PredictionStrategy';
 import { DataFlywheel } from './components/DataFlywheel';
 import { Architecture } from './components/Architecture';
 import { ROICalculator } from './components/ROICalculator';
+import { Proposal } from './components/Proposal';
 import { 
   NavigationTab, 
   StrategyReport, 
@@ -128,6 +129,15 @@ const App: React.FC = () => {
             setReport={setRoiReport} 
             details={businessDetails}
             setDetails={setBusinessDetails}
+          />
+        );
+      case NavigationTab.PROPOSAL:
+        return (
+          <Proposal 
+            strategyReport={strategyReport}
+            flywheelAnalysis={flywheelAnalysis}
+            architectureReport={architectureReport}
+            roiReport={roiReport}
           />
         );
       default:

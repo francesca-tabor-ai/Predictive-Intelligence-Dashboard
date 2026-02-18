@@ -18,6 +18,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onDown
     { id: NavigationTab.DATA_FLYWHEEL, label: 'Data Flywheel' },
     { id: NavigationTab.ARCHITECTURE, label: 'Architecture' },
     { id: NavigationTab.ROI_CALCULATOR, label: 'ROI Calculator' },
+    { id: NavigationTab.PROPOSAL, label: 'Proposal' },
   ];
 
   return (
