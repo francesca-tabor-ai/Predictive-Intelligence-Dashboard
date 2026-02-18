@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { 
   Brain, Loader2, Send, ChevronRight, PanelLeftClose, PanelLeftOpen 
 } from 'lucide-react';
-import { generateStrategy } from '../services/geminiService';
+import { generateStrategy } from '../services/openaiService';
 import { StrategyReport } from '../types';
 
 interface PredictionStrategyProps {

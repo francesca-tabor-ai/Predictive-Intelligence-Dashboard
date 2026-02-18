@@ -6,7 +6,7 @@ import {
 import { 
   TrendingUp, Loader2, Calculator, PieChart, Info, PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
-import { calculateROIReport } from '../services/geminiService';
+import { calculateROIReport } from '../services/openaiService';
 import { ROIReport } from '../types';
 
 interface ROICalculatorProps {

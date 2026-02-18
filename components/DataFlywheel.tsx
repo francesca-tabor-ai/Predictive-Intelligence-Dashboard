@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { 
   Zap, RefreshCw, Loader2, Lightbulb, PanelLeftClose, PanelLeftOpen 
 } from 'lucide-react';
-import { analyzeFlywheel } from '../services/geminiService';
+import { analyzeFlywheel } from '../services/openaiService';
 import { FlywheelAnalysis } from '../types';
 
 interface DataFlywheelProps {

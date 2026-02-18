@@ -4,7 +4,7 @@ import {
   BarChart3, Loader2, Target, TrendingUp, ShieldCheck, 
   Search, Briefcase, Zap, Star, ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
-import { generateValuation } from '../services/geminiService';
+import { generateValuation } from '../services/openaiService';
 import { ValuationReport } from '../types';
 
 interface CompanyValuationProps {

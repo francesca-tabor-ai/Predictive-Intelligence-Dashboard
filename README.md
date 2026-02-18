@@ -24,7 +24,7 @@ Traditional software platforms exhibit diminishing returns as markets saturate. 
 
 - **Unified Business Context**: A global state-synchronization engine ensures that as you refine your business description in one tool, the updated details are instantly reflected across the entire suite.
 - **Intelligent Layouts**: High-fidelity, collapsible interfaces allow for focused data entry or expansive, full-width report analysis.
-- **Multi-Model Resiliency**: A robust backend service utilizes Google Gemini 2.5/3 Pro as the primary intelligence engine, with automated, high-speed fallback to Anthropic Claude 3.5 and OpenAI GPT-4o to ensure zero downtime and high-quality synthesis.
+- **AI-Powered Analysis**: A robust backend service utilizes OpenAI GPT-4o as the primary intelligence engine to ensure high-quality synthesis and strategic analysis.
 - **Portable Intelligence**: One-click "Export Project" functionality bundles all generated strategic reports, architectures, and financial models into a professional ZIP archive for immediate stakeholder distribution.
 
 This is more than a dashboard; it is an operating system for identifying and building the dominant companies of the next 20 years.
@@ -44,6 +44,6 @@ View your app in AI Studio: https://ai.studio/apps/drive/1pyyy6bL9ZDi15lAMV-XWsY
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+2. Set the `OPENAI_API_KEY` in [.env.local](.env.local) to your OpenAI API key
 3. Run the app:
    `npm run dev`

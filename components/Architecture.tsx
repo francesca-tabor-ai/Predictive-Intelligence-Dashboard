@@ -4,7 +4,7 @@ import {
   Server, Cpu, Layers, Workflow, 
   ShieldCheck, Loader2, Database, Zap, RefreshCw, PlayCircle, AlertCircle, PanelLeftClose, PanelLeftOpen 
 } from 'lucide-react';
-import { generateArchitecture } from '../services/geminiService';
+import { generateArchitecture } from '../services/openaiService';
 import { ArchitectureAnalysis } from '../types';
 
 interface ArchitectureProps {
