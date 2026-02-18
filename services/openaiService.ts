@@ -842,13 +842,8 @@ Include key economic logic and value drivers.
 
 Slide 4: Intelligence Flywheel
 
-Visual Flywheel Components:
-
-Data →
-Prediction →
-Decision →
-Improvement →
-More Data
+Display the flywheel as a visual diagram with the core labels:
+Data → Prediction → Decision → Improvement → More Data
 
 Explain compounding advantage clearly.
 
