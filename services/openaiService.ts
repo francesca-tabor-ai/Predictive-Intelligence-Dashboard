@@ -27,7 +27,6 @@ function convertSchemaToOpenAI(schema: any): any {
     const result: any = {
       type: "object",
       properties: {},
-      required: Array.isArray(schema.required) ? schema.required : [],
       additionalProperties: false
     };
     
@@ -37,9 +36,10 @@ function convertSchemaToOpenAI(schema: any): any {
       }
     }
     
-    // Explicitly set required field - OpenAI strict mode requires this
+    // Explicitly set required field - OpenAI strict mode requires this to be an array
+    // Create a copy to ensure it's preserved correctly
     if (schema.required && Array.isArray(schema.required)) {
-      result.required = schema.required;
+      result.required = [...schema.required];
     } else {
       result.required = [];
     }
@@ -60,13 +60,8 @@ function convertPropertyToOpenAI(prop: any): any {
       items: prop.items ? convertPropertyToOpenAI(prop.items) : {}
     };
   } else if (prop.type === Type.OBJECT) {
-    // Recursively convert nested objects - convertSchemaToOpenAI already sets additionalProperties: false
-    const converted = convertSchemaToOpenAI(prop);
-    // Ensure required field is preserved for nested objects
-    if (prop.required && Array.isArray(prop.required)) {
-      converted.required = prop.required;
-    }
-    return converted;
+    // Recursively convert nested objects - convertSchemaToOpenAI handles required field preservation
+    return convertSchemaToOpenAI(prop);
   } else if (prop.type === Type.STRING) {
     const result: any = { type: "string" };
     if (prop.enum) result.enum = prop.enum;
