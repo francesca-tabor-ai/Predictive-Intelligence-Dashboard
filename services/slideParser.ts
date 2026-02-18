@@ -1,4 +1,5 @@
 import { Slide, SlideType, SlideHighlight } from '../types';
+import { cleanText } from './stylingValidator';
 
 /**
  * Parses raw text content into structured slide objects
@@ -23,12 +24,16 @@ function parseSlideBlock(block: string, index: number): Slide {
   let type: SlideType = 'generic';
   let title = `Slide ${index + 1}`;
   const body: string[] = [];
+  const keyData: string[] = [];
   const highlights: SlideHighlight[] = [];
   const metadata: Record<string, any> = {};
 
   let currentSection: 'title' | 'body' | 'highlights' | 'metadata' = 'title';
   let inHighlights = false;
   let inBody = false;
+  let inKeyData = false;
+  let inVisualLayout = false;
+  let inVisualComponent = false;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -47,24 +52,94 @@ function parseSlideBlock(block: string, index: number): Slide {
     if (line.toLowerCase().includes('title:')) {
       const titleMatch = line.match(/title:\s*(.+)/i);
       if (titleMatch) {
-        title = titleMatch[1].trim();
+        title = cleanText(titleMatch[1].trim());
       }
       continue;
     }
 
+    // Detect visual layout section (skip this content, will be handled by importer)
+    if (line.toLowerCase().includes('visual layout:') || line.toLowerCase().includes('visual layout')) {
+      inVisualLayout = true;
+      inBody = false;
+      inHighlights = false;
+      inKeyData = false;
+      continue;
+    }
+    
+    // Detect visual component section (skip this content, will be handled by importer)
+    if (line.toLowerCase().includes('visual component:') || line.toLowerCase().includes('visual component')) {
+      inVisualComponent = true;
+      inBody = false;
+      inHighlights = false;
+      inKeyData = false;
+      continue;
+    }
+    
+    // Skip visual layout/component content
+    if (inVisualLayout || inVisualComponent) {
+      // Check if we've moved to a new section
+      if (line.toLowerCase().includes('body content:') || 
+          line.toLowerCase().includes('body:') ||
+          line.toLowerCase().includes('key data') ||
+          line.toLowerCase().includes('highlights:')) {
+        inVisualLayout = false;
+        inVisualComponent = false;
+        // Continue to process the new section
+      } else {
+        // Store visual layout info in metadata for later processing
+        if (!metadata.visualLayout) {
+          metadata.visualLayout = [];
+        }
+        metadata.visualLayout.push(line);
+        continue;
+      }
+    }
+    
     // Detect body content section
     if (line.toLowerCase().includes('body content:') || line.toLowerCase().includes('body:')) {
       inBody = true;
       inHighlights = false;
+      inKeyData = false;
+      inVisualLayout = false;
+      inVisualComponent = false;
       continue;
     }
 
-    // Detect highlights section
+    // Detect key data highlights section
     if (line.toLowerCase().includes('key data highlights:') || 
-        line.toLowerCase().includes('highlights:') ||
+        line.toLowerCase().includes('key data:')) {
+      inKeyData = true;
+      inHighlights = false;
+      inBody = false;
+      continue;
+    }
+
+    // Detect highlights section (legacy format with label:value pairs)
+    if (line.toLowerCase().includes('highlights:') ||
         line.toLowerCase().includes('data highlights:')) {
       inHighlights = true;
+      inKeyData = false;
       inBody = false;
+      continue;
+    }
+
+    // Parse key data highlights (simple list format)
+    if (inKeyData) {
+      let cleanLine = line.replace(/^[-•]\s*/, '').trim();
+      cleanLine = cleanText(cleanLine);
+      if (cleanLine && cleanLine.length > 0) {
+        // Check if it's in label:value format (legacy highlights)
+        const highlightMatch = cleanLine.match(/^(.+?):\s*(.+)$/);
+        if (highlightMatch) {
+          highlights.push({
+            label: cleanText(highlightMatch[1].trim()),
+            value: cleanText(highlightMatch[2].trim())
+          });
+        } else {
+          // Simple string format for keyData
+          keyData.push(cleanLine);
+        }
+      }
       continue;
     }
 
@@ -90,11 +165,14 @@ function parseSlideBlock(block: string, index: number): Slide {
     }
 
     // Parse body content
-    if (inBody || (!inHighlights && !line.includes(':'))) {
-      // Remove bullet points and add to body
-      const cleanLine = line.replace(/^[-•]\s*/, '').trim();
+    if (inBody || (!inHighlights && !inKeyData && !line.includes(':'))) {
+      // Remove bullet points and styling instructions, then add to body
+      let cleanLine = line.replace(/^[-•]\s*/, '').trim();
+      cleanLine = cleanText(cleanLine);
       if (cleanLine && !cleanLine.toLowerCase().includes('slide type') && 
-          !cleanLine.toLowerCase().includes('title:')) {
+          !cleanLine.toLowerCase().includes('title:') &&
+          !cleanLine.toLowerCase().includes('visual layout') &&
+          !cleanLine.toLowerCase().includes('layout:')) {
         body.push(cleanLine);
       }
       continue;
@@ -102,7 +180,8 @@ function parseSlideBlock(block: string, index: number): Slide {
 
     // Fallback: if line doesn't match any pattern, add to body
     if (!line.includes(':') || line.match(/^[^:]+:\s*[^:]+$/)) {
-      const cleanLine = line.replace(/^[-•]\s*/, '').trim();
+      let cleanLine = line.replace(/^[-•]\s*/, '').trim();
+      cleanLine = cleanText(cleanLine);
       if (cleanLine && cleanLine.length > 0) {
         body.push(cleanLine);
       }
@@ -133,6 +212,7 @@ function parseSlideBlock(block: string, index: number): Slide {
     type,
     title: title || `Slide ${index + 1}`,
     body: body.length > 0 ? body : ['No content'],
+    keyData: keyData.length > 0 ? keyData : undefined,
     highlights: highlights.length > 0 ? highlights : undefined,
     metadata
   };

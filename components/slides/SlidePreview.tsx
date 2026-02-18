@@ -1,22 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { Slide } from '../../types';
-import { getSlideTemplate } from './SlideTemplates';
+import { StructuredSlideDeck } from '../../types';
+import { getSlideTemplate } from '../../services/slideRenderer';
 
 interface SlidePreviewProps {
-  slides: Slide[];
+  deck: StructuredSlideDeck;
   onClose: () => void;
 }
 
-export const SlidePreview: React.FC<SlidePreviewProps> = ({ slides, onClose }) => {
+export const SlidePreview: React.FC<SlidePreviewProps> = ({ deck, onClose }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') {
-        setCurrentIndex((prev) => (prev > 0 ? prev - 1 : slides.length - 1));
+        setCurrentIndex((prev) => (prev > 0 ? prev - 1 : deck.slides.length - 1));
       } else if (e.key === 'ArrowRight') {
-        setCurrentIndex((prev) => (prev < slides.length - 1 ? prev + 1 : 0));
+        setCurrentIndex((prev) => (prev < deck.slides.length - 1 ? prev + 1 : 0));
       } else if (e.key === 'Escape') {
         onClose();
       }
@@ -24,21 +24,21 @@ export const SlidePreview: React.FC<SlidePreviewProps> = ({ slides, onClose }) =
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [slides.length, onClose]);
+  }, [deck.slides.length, onClose]);
 
-  if (slides.length === 0) {
+  if (deck.slides.length === 0) {
     return null;
   }
 
-  const currentSlide = slides[currentIndex];
-  const SlideComponent = getSlideTemplate(currentSlide);
+  const currentSlide = deck.slides[currentIndex];
+  const SlideComponent = getSlideTemplate(deck, currentSlide);
 
   const goToPrevious = () => {
-    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : slides.length - 1));
+    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : deck.slides.length - 1));
   };
 
   const goToNext = () => {
-    setCurrentIndex((prev) => (prev < slides.length - 1 ? prev + 1 : 0));
+    setCurrentIndex((prev) => (prev < deck.slides.length - 1 ? prev + 1 : 0));
   };
 
   return (
@@ -55,7 +55,7 @@ export const SlidePreview: React.FC<SlidePreviewProps> = ({ slides, onClose }) =
         {/* Slide container */}
         <div className="flex-1 flex items-center justify-center overflow-auto p-8">
           <div className="w-full max-w-7xl">
-            <SlideComponent slide={currentSlide} slideNumber={currentIndex + 1} />
+            <SlideComponent deck={deck} slide={currentSlide} slideNumber={currentIndex + 1} />
           </div>
         </div>
 
@@ -64,19 +64,19 @@ export const SlidePreview: React.FC<SlidePreviewProps> = ({ slides, onClose }) =
           <button
             onClick={goToPrevious}
             className="p-2 hover:bg-slate-100 rounded-full transition-all"
-            disabled={slides.length <= 1}
+            disabled={deck.slides.length <= 1}
           >
             <ChevronLeft className="w-5 h-5 text-black" />
           </button>
           
           <span className="text-sm font-bold text-black px-4">
-            {currentIndex + 1} / {slides.length}
+            {currentIndex + 1} / {deck.slides.length}
           </span>
           
           <button
             onClick={goToNext}
             className="p-2 hover:bg-slate-100 rounded-full transition-all"
-            disabled={slides.length <= 1}
+            disabled={deck.slides.length <= 1}
           >
             <ChevronRight className="w-5 h-5 text-black" />
           </button>

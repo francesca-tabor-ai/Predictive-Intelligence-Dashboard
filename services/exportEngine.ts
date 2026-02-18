@@ -1,61 +1,279 @@
-import { Slide, SlideDeck } from '../types';
+import { Slide, StructuredSlideDeck } from '../types';
 import { theme } from './designSystem';
 
 /**
- * Generate HTML for a single slide
+ * Generate HTML for a single slide using template-based rendering
+ * Exported for use in project exporter
  */
-function generateSlideHTML(slide: Slide, index: number): string {
-  const hasHighlights = slide.highlights && slide.highlights.length > 0;
+export function generateSlideHTML(deck: StructuredSlideDeck, slide: Slide, index: number): string {
+  const slideNumber = index + 1;
   
-  // Generate body content
+  // Apply template based on slide type
+  switch (slide.type) {
+    case 'cover-slide':
+      return generateCoverSlideHTML(deck, slide);
+    case 'executive-summary':
+      return generateExecutiveSummaryHTML(deck, slide, slideNumber);
+    case 'architecture':
+      return generateArchitectureHTML(deck, slide, slideNumber);
+    case 'roi':
+      return generateTwoColumnHTML(deck, slide, slideNumber);
+    case 'roadmap':
+      return generateTimelineHTML(deck, slide, slideNumber);
+    case 'conclusion':
+      return generateClosingHTML(deck, slide);
+    default:
+      return generateGenericHTML(deck, slide, slideNumber);
+  }
+}
+
+/**
+ * Cover Slide HTML
+ */
+function generateCoverSlideHTML(deck: StructuredSlideDeck, slide: Slide): string {
+  const metadata = deck.metadata || {};
+  const preparedFor = metadata.toCompany || '';
+  const attention = metadata.toPerson ? `${metadata.toPerson}${metadata.toRole ? `, ${metadata.toRole}` : ''}` : '';
+  const authorName = metadata.fromPerson || '';
+  const authorRole = metadata.fromRole || '';
+  const authorCompany = metadata.fromCompany || '';
+  const displayTitle = slide.title || 'Predictive Intelligence Flywheel Dashboard';
+
+  return `
+    <div class="slide-canvas" style="min-height: 100vh; padding: ${theme.layout.slidePadding}px; display: flex; flex-direction: column; background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.4) 0%, rgba(2, 6, 23, 1) 50%, rgba(2, 6, 23, 1) 100%), linear-gradient(180deg, rgba(2, 6, 23, 1) 0%, rgba(15, 23, 42, 0.9) 50%, rgba(2, 6, 23, 1) 100%); font-family: ${theme.fonts.primary}; color: #FFFFFF;">
+      <div style="flex: 1; display: flex; flex-direction: column; justify-content: flex-start; padding-top: 48px;">
+        <div style="margin-bottom: 32px;">
+          <h1 style="font-weight: ${theme.typography.display.fontWeight}; font-size: ${theme.typography.display.fontSize}px; letter-spacing: ${theme.typography.display.letterSpacing}em; line-height: ${theme.typography.display.lineHeight}; margin-bottom: 16px; color: #FFFFFF;">
+            ${escapeHtml(displayTitle)}
+          </h1>
+          <div style="width: fit-content; min-width: 400px; max-width: 700px; height: 2px; background: linear-gradient(90deg, ${theme.colors.gradient.purple} 0%, ${theme.colors.gradient.orange} 100%); margin-bottom: 16px;"></div>
+          <div style="font-size: ${theme.typography.metadata.fontSize}px; font-weight: ${theme.typography.metadata.fontWeight}; text-transform: uppercase; letter-spacing: ${theme.typography.metadata.letterSpacing}em; color: #FFFFFF;">
+            DASHBOARD
+          </div>
+        </div>
+        ${preparedFor ? `<p style="font-size: ${theme.typography.body.fontSize}px; font-weight: ${theme.typography.body.fontWeight}; line-height: ${theme.typography.body.lineHeight}; color: #FFFFFF; margin-bottom: 8px;">Prepared for ${escapeHtml(preparedFor)}</p>` : ''}
+        ${attention ? `<p style="font-size: ${theme.typography.body.fontSize}px; font-weight: ${theme.typography.body.fontWeight}; line-height: ${theme.typography.body.lineHeight}; color: #FFFFFF; margin-bottom: 8px;">Attention: ${escapeHtml(attention)}</p>` : ''}
+        <div style="width: 200px; height: 1px; background: #FFFFFF; opacity: 0.3; margin: 24px 0;"></div>
+        ${authorName ? `<p style="font-size: ${theme.typography.section.fontSize}px; font-weight: ${theme.typography.section.fontWeight}; color: #FFFFFF; margin-bottom: 8px;">${escapeHtml(authorName)}</p>` : ''}
+        ${authorRole ? `<p style="font-size: ${theme.typography.body.fontSize}px; font-weight: ${theme.typography.body.fontWeight}; line-height: ${theme.typography.body.lineHeight}; color: #FFFFFF; margin-bottom: 8px;">${escapeHtml(authorRole)}</p>` : ''}
+        ${authorCompany ? `<p style="font-size: ${theme.typography.body.fontSize}px; font-weight: ${theme.typography.body.fontWeight}; line-height: ${theme.typography.body.lineHeight}; color: #FFFFFF;">${escapeHtml(authorCompany)}</p>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Executive Summary HTML
+ */
+function generateExecutiveSummaryHTML(deck: StructuredSlideDeck, slide: Slide, slideNumber: number): string {
   const bodyHTML = slide.body.map(line => 
     `<li style="margin-bottom: 8px; line-height: ${theme.typography.body.lineHeight};">${escapeHtml(line)}</li>`
   ).join('\n        ');
   
-  // Generate highlights HTML
-  const highlightsHTML = hasHighlights ? slide.highlights!.map(highlight => `
-          <div style="margin-bottom: 16px;">
-            <div style="font-size: ${theme.typography.metadata.fontSize}px; font-weight: ${theme.typography.metadata.fontWeight}; text-transform: uppercase; letter-spacing: ${theme.typography.metadata.letterSpacing}em; color: ${theme.typography.metadata.color}; margin-bottom: 4px;">
-              ${escapeHtml(highlight.label)}
-            </div>
-            <div style="font-size: ${theme.typography.section.fontSize}px; font-weight: ${theme.typography.section.fontWeight}; font-family: ${theme.typography.data.fontFamily}; letter-spacing: ${theme.typography.data.letterSpacing}em; color: ${theme.typography.display.color};">
-              ${escapeHtml(highlight.value)}
-            </div>
-          </div>
-        `).join('') : '';
-  
-  // Generate layout based on slide type
-  let contentHTML = '';
-  if (hasHighlights) {
-    contentHTML = `
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: ${theme.layout.spacing.gap12}px;">
-          <ul style="font-size: ${theme.typography.body.fontSize}px; font-weight: ${theme.typography.body.fontWeight}; line-height: ${theme.typography.body.lineHeight}; color: ${theme.typography.body.color}; padding-left: ${theme.layout.spacing.gap12}px;">
-            ${bodyHTML}
-          </ul>
-          <div style="background: ${theme.colors.pureWhite}; padding: ${theme.layout.spacing.gap12}px; border-radius: ${theme.layout.borderRadius.executive}px; border: 1px solid ${theme.colors.coolGrey.medium}; box-shadow: ${theme.shadows.executive};">
-            ${highlightsHTML}
-          </div>
-        </div>
-      `;
-  } else {
-    contentHTML = `
-        <ul style="font-size: ${theme.typography.body.fontSize}px; font-weight: ${theme.typography.body.fontWeight}; line-height: ${theme.typography.body.lineHeight}; color: ${theme.typography.body.color}; padding-left: ${theme.layout.spacing.gap12}px;">
-          ${bodyHTML}
-        </ul>
-      `;
-  }
-  
+  const keyDataHTML = slide.keyData && slide.keyData.length > 0 ? slide.keyData.map(line => 
+    `<li style="margin-bottom: 8px; line-height: ${theme.typography.body.lineHeight};">${escapeHtml(line)}</li>`
+  ).join('\n        ') : '';
+
+  const contentHTML = keyDataHTML ? `
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: ${theme.layout.spacing.gap12}px;">
+      <ul style="font-size: ${theme.typography.body.fontSize}px; font-weight: ${theme.typography.body.fontWeight}; line-height: ${theme.typography.body.lineHeight}; color: ${theme.typography.body.color}; padding-left: ${theme.layout.spacing.gap12}px;">
+        ${bodyHTML}
+      </ul>
+      <ul style="font-size: ${theme.typography.body.fontSize}px; font-weight: ${theme.typography.body.fontWeight}; line-height: ${theme.typography.body.lineHeight}; color: ${theme.typography.body.color}; padding-left: ${theme.layout.spacing.gap12}px;">
+        ${keyDataHTML}
+      </ul>
+    </div>
+  ` : `
+    <ul style="font-size: ${theme.typography.body.fontSize}px; font-weight: ${theme.typography.body.fontWeight}; line-height: ${theme.typography.body.lineHeight}; color: ${theme.typography.body.color}; padding-left: ${theme.layout.spacing.gap12}px;">
+      ${bodyHTML}
+    </ul>
+  `;
+
   return `
     <div class="slide-canvas" style="min-height: 100vh; padding: ${theme.layout.slidePadding}px; display: flex; flex-direction: column; background: ${theme.colors.pureWhite}; font-family: ${theme.fonts.primary};">
       <div style="width: 32px; height: 2px; background: linear-gradient(135deg, ${theme.colors.gradient.indigo} 0%, ${theme.colors.gradient.purple} 33%, ${theme.colors.gradient.pink} 66%, ${theme.colors.gradient.orange} 100%); margin-bottom: 24px;"></div>
       <div style="font-size: ${theme.typography.metadata.fontSize}px; font-weight: ${theme.typography.metadata.fontWeight}; text-transform: uppercase; letter-spacing: ${theme.typography.metadata.letterSpacing}em; color: ${theme.typography.metadata.color}; margin-bottom: 16px;">
-        Slide ${index + 1}
+        Slide ${slideNumber}
       </div>
       <h1 style="font-weight: ${theme.typography.display.fontWeight}; font-size: ${theme.typography.display.fontSize}px; letter-spacing: ${theme.typography.display.letterSpacing}em; line-height: ${theme.typography.display.lineHeight}; margin-bottom: 24px; color: ${theme.typography.display.color};">
         ${escapeHtml(slide.title)}
       </h1>
       <div style="flex: 1;">
         ${contentHTML}
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Architecture HTML
+ */
+function generateArchitectureHTML(deck: StructuredSlideDeck, slide: Slide, slideNumber: number): string {
+  const bodyHTML = slide.body.map(line => 
+    `<li style="margin-bottom: 8px; line-height: ${theme.typography.body.lineHeight};">${escapeHtml(line)}</li>`
+  ).join('\n        ');
+
+  return `
+    <div class="slide-canvas" style="min-height: 100vh; padding: ${theme.layout.slidePadding}px; display: flex; flex-direction: column; background: ${theme.colors.pureWhite}; font-family: ${theme.fonts.primary};">
+      <div style="width: 32px; height: 2px; background: linear-gradient(135deg, ${theme.colors.gradient.indigo} 0%, ${theme.colors.gradient.purple} 33%, ${theme.colors.gradient.pink} 66%, ${theme.colors.gradient.orange} 100%); margin-bottom: 24px;"></div>
+      <div style="font-size: ${theme.typography.metadata.fontSize}px; font-weight: ${theme.typography.metadata.fontWeight}; text-transform: uppercase; letter-spacing: ${theme.typography.metadata.letterSpacing}em; color: ${theme.typography.metadata.color}; margin-bottom: 16px;">
+        Slide ${slideNumber}
+      </div>
+      <h1 style="font-weight: ${theme.typography.display.fontWeight}; font-size: ${theme.typography.display.fontSize}px; letter-spacing: ${theme.typography.display.letterSpacing}em; line-height: ${theme.typography.display.lineHeight}; margin-bottom: 24px; color: ${theme.typography.display.color};">
+        ${escapeHtml(slide.title)}
+      </h1>
+      <div style="flex: 1;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: ${theme.layout.spacing.gap12}px;">
+          <div style="background: ${theme.colors.coolGrey.light}; border-radius: ${theme.layout.borderRadius.executive}px; border: 1px solid ${theme.colors.coolGrey.medium}; min-height: 400px; display: flex; align-items: center; justify-content: center;">
+            <div style="font-size: ${theme.typography.metadata.fontSize}px; font-weight: ${theme.typography.metadata.fontWeight}; text-transform: uppercase; letter-spacing: ${theme.typography.metadata.letterSpacing}em; color: ${theme.typography.metadata.color};">
+              Architecture Diagram
+            </div>
+          </div>
+          <ul style="font-size: ${theme.typography.body.fontSize}px; font-weight: ${theme.typography.body.fontWeight}; line-height: ${theme.typography.body.lineHeight}; color: ${theme.typography.body.color}; padding-left: ${theme.layout.spacing.gap12}px;">
+            ${bodyHTML}
+          </ul>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Two-Column HTML
+ */
+function generateTwoColumnHTML(deck: StructuredSlideDeck, slide: Slide, slideNumber: number): string {
+  const leftItems = slide.body.slice(0, Math.ceil(slide.body.length / 2));
+  const rightItems = slide.keyData && slide.keyData.length > 0 
+    ? slide.keyData 
+    : slide.body.slice(Math.ceil(slide.body.length / 2));
+
+  const leftHTML = leftItems.map(line => 
+    `<li style="margin-bottom: 8px; line-height: ${theme.typography.body.lineHeight};">${escapeHtml(line)}</li>`
+  ).join('\n        ');
+  
+  const rightHTML = rightItems.map(line => 
+    `<li style="margin-bottom: 8px; line-height: ${theme.typography.body.lineHeight};">${escapeHtml(line)}</li>`
+  ).join('\n        ');
+
+  return `
+    <div class="slide-canvas" style="min-height: 100vh; padding: ${theme.layout.slidePadding}px; display: flex; flex-direction: column; background: ${theme.colors.pureWhite}; font-family: ${theme.fonts.primary};">
+      <div style="width: 32px; height: 2px; background: linear-gradient(135deg, ${theme.colors.gradient.indigo} 0%, ${theme.colors.gradient.purple} 33%, ${theme.colors.gradient.pink} 66%, ${theme.colors.gradient.orange} 100%); margin-bottom: 24px;"></div>
+      <div style="font-size: ${theme.typography.metadata.fontSize}px; font-weight: ${theme.typography.metadata.fontWeight}; text-transform: uppercase; letter-spacing: ${theme.typography.metadata.letterSpacing}em; color: ${theme.typography.metadata.color}; margin-bottom: 16px;">
+        Slide ${slideNumber}
+      </div>
+      <h1 style="font-weight: ${theme.typography.display.fontWeight}; font-size: ${theme.typography.display.fontSize}px; letter-spacing: ${theme.typography.display.letterSpacing}em; line-height: ${theme.typography.display.lineHeight}; margin-bottom: 24px; color: ${theme.typography.display.color};">
+        ${escapeHtml(slide.title)}
+      </h1>
+      <div style="flex: 1;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: ${theme.layout.spacing.gap12}px;">
+          <ul style="font-size: ${theme.typography.body.fontSize}px; font-weight: ${theme.typography.body.fontWeight}; line-height: ${theme.typography.body.lineHeight}; color: ${theme.typography.body.color}; padding-left: ${theme.layout.spacing.gap12}px;">
+            ${leftHTML}
+          </ul>
+          <ul style="font-size: ${theme.typography.body.fontSize}px; font-weight: ${theme.typography.body.fontWeight}; line-height: ${theme.typography.body.lineHeight}; color: ${theme.typography.body.color}; padding-left: ${theme.layout.spacing.gap12}px;">
+            ${rightHTML}
+          </ul>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Timeline HTML
+ */
+function generateTimelineHTML(deck: StructuredSlideDeck, slide: Slide, slideNumber: number): string {
+  const itemsHTML = slide.body.map((item, index) => `
+    <div style="display: flex; align-items: flex-start; gap: 16px; margin-bottom: 24px;">
+      <div style="width: 8px; height: 8px; border-radius: 50%; background: ${theme.colors.gradient.indigo}; margin-top: 8px; flex-shrink: 0;"></div>
+      <p style="font-size: ${theme.typography.body.fontSize}px; font-weight: ${theme.typography.body.fontWeight}; line-height: ${theme.typography.body.lineHeight}; color: ${theme.typography.body.color}; flex: 1;">
+        ${escapeHtml(item)}
+      </p>
+    </div>
+  `).join('');
+
+  return `
+    <div class="slide-canvas" style="min-height: 100vh; padding: ${theme.layout.slidePadding}px; display: flex; flex-direction: column; background: ${theme.colors.pureWhite}; font-family: ${theme.fonts.primary};">
+      <div style="width: 32px; height: 2px; background: linear-gradient(135deg, ${theme.colors.gradient.indigo} 0%, ${theme.colors.gradient.purple} 33%, ${theme.colors.gradient.pink} 66%, ${theme.colors.gradient.orange} 100%); margin-bottom: 24px;"></div>
+      <div style="font-size: ${theme.typography.metadata.fontSize}px; font-weight: ${theme.typography.metadata.fontWeight}; text-transform: uppercase; letter-spacing: ${theme.typography.metadata.letterSpacing}em; color: ${theme.typography.metadata.color}; margin-bottom: 16px;">
+        Slide ${slideNumber}
+      </div>
+      <h1 style="font-weight: ${theme.typography.display.fontWeight}; font-size: ${theme.typography.display.fontSize}px; letter-spacing: ${theme.typography.display.letterSpacing}em; line-height: ${theme.typography.display.lineHeight}; margin-bottom: 24px; color: ${theme.typography.display.color};">
+        ${escapeHtml(slide.title)}
+      </h1>
+      <div style="flex: 1;">
+        ${itemsHTML}
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Closing HTML
+ */
+function generateClosingHTML(deck: StructuredSlideDeck, slide: Slide): string {
+  const metadata = deck.metadata || {};
+  const authorName = metadata.fromPerson || '';
+  const authorRole = metadata.fromRole || '';
+  const authorCompany = metadata.fromCompany || '';
+  const displayTitle = slide.title || 'Strategic Call to Action';
+
+  const bodyHTML = slide.body.map(line => 
+    `<p style="font-size: ${theme.typography.body.fontSize}px; font-weight: ${theme.typography.body.fontWeight}; line-height: ${theme.typography.body.lineHeight}; color: #FFFFFF; margin-bottom: 16px;">${escapeHtml(line)}</p>`
+  ).join('');
+
+  return `
+    <div class="slide-canvas" style="min-height: 100vh; padding: ${theme.layout.slidePadding}px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.4) 0%, rgba(2, 6, 23, 1) 50%, rgba(2, 6, 23, 1) 100%), linear-gradient(180deg, rgba(2, 6, 23, 1) 0%, rgba(15, 23, 42, 0.9) 50%, rgba(2, 6, 23, 1) 100%); font-family: ${theme.fonts.primary}; color: #FFFFFF; text-align: center;">
+      <h1 style="font-weight: ${theme.typography.display.fontWeight}; font-size: ${theme.typography.display.fontSize}px; letter-spacing: ${theme.typography.display.letterSpacing}em; line-height: ${theme.typography.display.lineHeight}; margin-bottom: 24px; color: #FFFFFF;">
+        ${escapeHtml(displayTitle)}
+      </h1>
+      <div style="width: fit-content; min-width: 300px; max-width: 500px; height: 2px; background: linear-gradient(90deg, ${theme.colors.gradient.purple} 0%, ${theme.colors.gradient.orange} 100%); margin-bottom: 32px;"></div>
+      ${bodyHTML}
+      ${(authorName || authorRole || authorCompany) ? `
+        <div style="margin-top: 32px;">
+          ${authorName ? `<p style="font-size: ${theme.typography.section.fontSize}px; font-weight: ${theme.typography.section.fontWeight}; color: #FFFFFF; margin-bottom: 8px;">${escapeHtml(authorName)}</p>` : ''}
+          ${authorRole ? `<p style="font-size: ${theme.typography.body.fontSize}px; font-weight: ${theme.typography.body.fontWeight}; line-height: ${theme.typography.body.lineHeight}; color: #FFFFFF; margin-bottom: 8px;">${escapeHtml(authorRole)}</p>` : ''}
+          ${authorCompany ? `<p style="font-size: ${theme.typography.body.fontSize}px; font-weight: ${theme.typography.body.fontWeight}; line-height: ${theme.typography.body.lineHeight}; color: #FFFFFF;">${escapeHtml(authorCompany)}</p>` : ''}
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+/**
+ * Generic HTML
+ */
+function generateGenericHTML(deck: StructuredSlideDeck, slide: Slide, slideNumber: number): string {
+  const bodyHTML = slide.body.map(line => 
+    `<li style="margin-bottom: 8px; line-height: ${theme.typography.body.lineHeight};">${escapeHtml(line)}</li>`
+  ).join('\n        ');
+  
+  const keyDataHTML = slide.keyData && slide.keyData.length > 0 ? `
+    <div style="margin-top: 24px;">
+      <h3 style="font-size: ${theme.typography.section.fontSize}px; font-weight: ${theme.typography.section.fontWeight}; margin-bottom: 16px; color: ${theme.typography.section.color};">
+        Key Data Highlights
+      </h3>
+      <ul style="font-size: ${theme.typography.body.fontSize}px; font-weight: ${theme.typography.body.fontWeight}; line-height: ${theme.typography.body.lineHeight}; color: ${theme.typography.body.color}; padding-left: ${theme.layout.spacing.gap12}px;">
+        ${slide.keyData.map(line => 
+          `<li style="margin-bottom: 8px; line-height: ${theme.typography.body.lineHeight};">${escapeHtml(line)}</li>`
+        ).join('\n        ')}
+      </ul>
+    </div>
+  ` : '';
+
+  return `
+    <div class="slide-canvas" style="min-height: 100vh; padding: ${theme.layout.slidePadding}px; display: flex; flex-direction: column; background: ${theme.colors.pureWhite}; font-family: ${theme.fonts.primary};">
+      <div style="width: 32px; height: 2px; background: linear-gradient(135deg, ${theme.colors.gradient.indigo} 0%, ${theme.colors.gradient.purple} 33%, ${theme.colors.gradient.pink} 66%, ${theme.colors.gradient.orange} 100%); margin-bottom: 24px;"></div>
+      <div style="font-size: ${theme.typography.metadata.fontSize}px; font-weight: ${theme.typography.metadata.fontWeight}; text-transform: uppercase; letter-spacing: ${theme.typography.metadata.letterSpacing}em; color: ${theme.typography.metadata.color}; margin-bottom: 16px;">
+        Slide ${slideNumber}
+      </div>
+      <h1 style="font-weight: ${theme.typography.display.fontWeight}; font-size: ${theme.typography.display.fontSize}px; letter-spacing: ${theme.typography.display.letterSpacing}em; line-height: ${theme.typography.display.lineHeight}; margin-bottom: 24px; color: ${theme.typography.display.color};">
+        ${escapeHtml(slide.title)}
+      </h1>
+      <div style="flex: 1;">
+        <ul style="font-size: ${theme.typography.body.fontSize}px; font-weight: ${theme.typography.body.fontWeight}; line-height: ${theme.typography.body.lineHeight}; color: ${theme.typography.body.color}; padding-left: ${theme.layout.spacing.gap12}px;">
+          ${bodyHTML}
+        </ul>
+        ${keyDataHTML}
       </div>
     </div>
   `;
@@ -73,9 +291,16 @@ function escapeHtml(text: string): string {
 /**
  * Export slides to PDF using HTML rendering
  */
-export async function exportToPDF(slides: Slide[], filename: string): Promise<void> {
+export async function exportToPDF(slides: Slide[], filename: string, deck?: StructuredSlideDeck): Promise<void> {
+  // Create a default deck if not provided (for backward compatibility)
+  const defaultDeck: StructuredSlideDeck = deck || {
+    deckStyleId: 'mono-gradient-v1',
+    slides: slides,
+    diagrams: []
+  };
+  
   // Generate HTML for all slides
-  const slidesHTML = slides.map((slide, index) => generateSlideHTML(slide, index)).join('');
+  const slidesHTML = slides.map((slide, index) => generateSlideHTML(defaultDeck, slide, index)).join('');
 
   // Create complete HTML document
   const htmlContent = `
@@ -176,8 +401,8 @@ export async function exportToPDF(slides: Slide[], filename: string): Promise<vo
     .flex { display: flex; }
     .flex-col { flex-direction: column; }
     .flex-1 { flex: 1; }
-    .bg-white { background: ${theme.colors.background}; }
-    .text-black { color: ${theme.colors.text.primary}; }
+    .bg-white { background: ${theme.colors.pureWhite}; }
+    .text-black { color: ${theme.colors.obsidian}; }
     .text-slate-400 { color: ${theme.colors.text.muted}; }
     .font-bold { font-weight: 700; }
     .list-disc { list-style-type: disc; }
@@ -211,7 +436,7 @@ export async function exportToPDF(slides: Slide[], filename: string): Promise<vo
 /**
  * Export slides to PowerPoint using pptxgenjs
  */
-export async function exportToPowerPoint(slides: Slide[], filename: string): Promise<void> {
+export async function exportToPowerPoint(slides: Slide[], filename: string, deck?: StructuredSlideDeck): Promise<void> {
   try {
     // Dynamic import to avoid bundling issues
     const PptxGenJS = (await import('pptxgenjs')).default;

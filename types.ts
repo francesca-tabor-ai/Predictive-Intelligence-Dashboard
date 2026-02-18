@@ -189,13 +189,66 @@ export interface SlideHighlight {
   value: string;
 }
 
+export interface VisualReference {
+  kind: 'diagram' | 'chart' | 'image';
+  diagramId?: string;
+  placement: 'background-accent' | 'left' | 'right' | 'top' | 'bottom' | 'center';
+  metadata?: Record<string, any>;
+}
+
 export interface Slide {
   id: string;
   type: SlideType;
   title: string;
   body: string[];
-  highlights?: SlideHighlight[];
+  keyData?: string[]; // Key data highlights as array of strings
+  highlights?: SlideHighlight[]; // Legacy format, kept for compatibility
+  visuals?: VisualReference[];
   metadata?: Record<string, any>;
+}
+
+export interface Diagram {
+  id: string;
+  type: 'gradient-accent' | 'flywheel' | 'architecture' | 'timeline' | 'chart' | 'custom';
+  spec: DiagramSpec;
+  name?: string; // Optional name for the diagram
+}
+
+export interface DiagramSpec {
+  // Flywheel diagram spec
+  nodes?: Array<{ label: string; angle?: number }>;
+  size?: number;
+  radius?: number;
+  
+  // Architecture diagram spec
+  layers?: Array<{ name: string; description?: string; color?: string }>;
+  
+  // Timeline diagram spec
+  items?: Array<{ label: string; date?: string; description?: string }>;
+  
+  // Gradient accent spec
+  direction?: 'horizontal' | 'vertical' | 'diagonal';
+  colors?: string[];
+  
+  // Common properties
+  width?: number;
+  height?: number;
+  backgroundColor?: string;
+  [key: string]: any; // Allow additional custom properties
+}
+
+export interface StructuredSlideDeck {
+  deckStyleId?: string;
+  slides: Slide[];
+  diagrams?: Diagram[];
+  metadata?: {
+    toCompany?: string;
+    toPerson?: string;
+    toRole?: string;
+    fromCompany?: string;
+    fromPerson?: string;
+    fromRole?: string;
+  };
 }
 
 export interface SlideDeck {
