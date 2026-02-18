@@ -145,7 +145,8 @@ Avoid generic AI suggestions. Always anchor on measurable economic value.`;
           properties: {
             risk: { type: Type.STRING },
             mitigation: { type: Type.STRING }
-          }
+          },
+          required: ["risk", "mitigation"]
         }
       },
       rolloutPlan: {
@@ -276,7 +277,8 @@ Avoid generic AI buzzwords. Focus on architectural blueprints that turn data int
             problem: { type: Type.STRING },
             value: { type: Type.STRING },
             economicLever: { type: Type.STRING }
-          }
+          },
+          required: ["problem", "value", "economicLever"]
         }
       },
       layeredArchitecture: {
@@ -299,7 +301,8 @@ Avoid generic AI buzzwords. Focus on architectural blueprints that turn data int
             phase: { type: Type.STRING },
             objective: { type: Type.STRING },
             reasoning: { type: Type.STRING }
-          }
+          },
+          required: ["phase", "objective", "reasoning"]
         }
       },
       defensibility: { type: Type.STRING },
@@ -310,7 +313,8 @@ Avoid generic AI buzzwords. Focus on architectural blueprints that turn data int
           properties: {
             risk: { type: Type.STRING },
             guardrail: { type: Type.STRING }
-          }
+          },
+          required: ["risk", "guardrail"]
         }
       }
     },
@@ -392,7 +396,8 @@ Always prioritize economic clarity. Always show formulas. Always quantify impact
             opportunity: { type: Type.STRING },
             impactType: { type: Type.STRING },
             score: { type: Type.NUMBER }
-          }
+          },
+          required: ["opportunity", "impactType", "score"]
         }
       },
       roiCalculation: {
@@ -415,7 +420,8 @@ Always prioritize economic clarity. Always show formulas. Always quantify impact
             net: { type: Type.STRING },
             benefitNumeric: { type: Type.NUMBER, description: "Raw integer benefit for charting" },
             costNumeric: { type: Type.NUMBER, description: "Raw integer cost for charting" }
-          }
+          },
+          required: ["year", "benefit", "cost", "net", "benefitNumeric", "costNumeric"]
         }
       },
       paybackPeriod: { type: Type.STRING },
