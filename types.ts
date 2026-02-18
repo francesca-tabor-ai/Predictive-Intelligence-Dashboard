@@ -192,8 +192,19 @@ export interface SlideHighlight {
 export interface VisualReference {
   kind: 'diagram' | 'chart' | 'image';
   diagramId?: string;
+  imageId?: string; // For image assets
   placement: 'background-accent' | 'left' | 'right' | 'top' | 'bottom' | 'center';
+  size?: 'small' | 'medium' | 'large';
+  caption?: string;
+  assetId?: string; // Generated asset ID (for download/generation tracking)
   metadata?: Record<string, any>;
+}
+
+export interface StyleGuidance {
+  emphasisLevel?: 'low' | 'medium' | 'high';
+  layoutIntent?: 'single-column' | 'two-column' | 'diagram-led' | 'text-led';
+  calloutPreference?: number; // 0-2 callouts
+  notes?: string; // Free text for additional style guidance
 }
 
 export interface Slide {
@@ -204,6 +215,7 @@ export interface Slide {
   keyData?: string[]; // Key data highlights as array of strings
   highlights?: SlideHighlight[]; // Legacy format, kept for compatibility
   visuals?: VisualReference[];
+  styleGuidance?: StyleGuidance; // Layout/styling intent (not exported to slide copy)
   metadata?: Record<string, any>;
 }
 

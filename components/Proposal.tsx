@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Loader2, Download, Edit3, Eye, CheckCircle, FileDown, Presentation, AlertTriangle, Sparkles } from 'lucide-react';
+import { FileText, Loader2, Download, Edit3, Eye, CheckCircle, FileDown, Presentation, AlertTriangle, Sparkles, FileImage, Image, ChevronDown, MoreVertical } from 'lucide-react';
 import { generateProposal } from '../services/openaiService';
 import { StrategyReport, FlywheelAnalysis, ArchitectureAnalysis, ROIReport, Slide, StructuredSlideDeck, SlideType } from '../types';
 import { validateSlides } from '../services/slideParser';
@@ -53,6 +53,10 @@ export const Proposal: React.FC<ProposalProps> = ({
   const [importWarnings, setImportWarnings] = useState<ImportWarning[]>([]);
   const [approvedVersion, setApprovedVersion] = useState<StructuredSlideDeck | null>(null);
   const [exportingProject, setExportingProject] = useState(false);
+  const [generatingVisuals, setGeneratingVisuals] = useState(false);
+  const [downloadingVisuals, setDownloadingVisuals] = useState(false);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
+  const [showMoreDropdown, setShowMoreDropdown] = useState(false);
 
   // Validate slides whenever deck changes
   useEffect(() => {
@@ -100,6 +104,22 @@ export const Proposal: React.FC<ProposalProps> = ({
       setSelectedSlideId(deck.slides[0]?.id || null);
     }
   }, [deck.slides, selectedSlideId]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('[data-dropdown-export]') && !target.closest('[data-dropdown-more]')) {
+        setShowExportDropdown(false);
+        setShowMoreDropdown(false);
+      }
+    };
+
+    if (showExportDropdown || showMoreDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showExportDropdown, showMoreDropdown]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -539,120 +559,241 @@ export const Proposal: React.FC<ProposalProps> = ({
         <div className="flex-1 space-y-6">
           {deck.slides.length > 0 ? (
             <div className="space-y-6">
-              {/* Status and Actions Bar */}
+              {/* Slides Header and Actions Bar */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div>
-                    <h2 className="text-3xl font-bold text-black tracking-tight mb-2">
-                      Proposal Content
-                    </h2>
-                    <div className="flex items-center gap-3">
-                      <span className={`text-xs font-bold px-3 py-1 rounded-full ${
-                        status === 'draft' ? 'bg-slate-100 text-slate-600' :
-                        status === 'approved' ? 'bg-green-100 text-green-700' :
-                        'bg-blue-100 text-blue-700'
-                      }`}>
-                        {status.toUpperCase()}
+                <div className="flex items-center gap-3">
+                  <h2 className="text-2xl font-bold text-black tracking-tight">
+                    Slides
+                  </h2>
+                  <span className="text-sm text-slate-500">
+                    {status.charAt(0).toUpperCase() + status.slice(1)} • {deck.slides.length} slide{deck.slides.length !== 1 ? 's' : ''}
+                    {approvedVersion && (
+                      <span className="ml-2 text-slate-400" title="Version snapshot locked">
+                        • Locked
                       </span>
-                      {approvedVersion && (
-                        <span className="text-xs text-slate-400" title="Version snapshot locked">
-                          📌 Locked
-                        </span>
-                      )}
-                      <span className="text-sm text-slate-500">
-                        {deck.slides.length} slide{deck.slides.length !== 1 ? 's' : ''}
-                      </span>
-                    </div>
-                  </div>
+                    )}
+                  </span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setShowImportDialog(true)}
-                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-black rounded-[20px] font-bold flex items-center gap-2 transition-all text-sm"
-                  >
-                    <FileText className="w-4 h-4" />
-                    Import Text
-                  </button>
-                  {deck.slides.length > 0 && (
-                    <button
-                      onClick={handleExportText}
-                      className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-black rounded-[20px] font-bold flex items-center gap-2 transition-all text-sm"
-                    >
-                      <Download className="w-4 h-4" />
-                      Export Text
-                    </button>
-                  )}
+                  {/* Primary Actions */}
                   <button
                     onClick={handlePreview}
                     disabled={deck.slides.length === 0}
-                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-black rounded-[20px] font-bold flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-black hover:bg-slate-800 text-white rounded-[20px] font-bold flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Preview renders from JSON + theme + diagrams"
                   >
                     <Eye className="w-4 h-4" />
                     Preview
                   </button>
-                  <button
-                    onClick={handleApprove}
-                    disabled={deck.slides.length === 0 || parseErrors.length > 0 || status === 'approved'}
-                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-[20px] font-bold flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Locks the JSON (creates version snapshot)"
-                  >
-                    <CheckCircle className="w-4 h-4" />
-                    Approve
-                  </button>
-                  <div className="relative">
+                  
+                  {/* Export Dropdown */}
+                  <div className="relative" data-dropdown-export>
                     <button
-                      onClick={handleExportPDF}
-                      disabled={deck.slides.length === 0 || exporting !== null}
+                      onClick={() => {
+                        setShowExportDropdown(!showExportDropdown);
+                        setShowMoreDropdown(false);
+                      }}
+                      disabled={deck.slides.length === 0 || exporting !== null || exportingProject}
                       className="px-4 py-2 bg-black hover:bg-slate-800 text-white rounded-[20px] font-bold flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Generated from JSON render pipeline"
                     >
-                      {exporting === 'pdf' ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Exporting...
-                        </>
-                      ) : (
-                        <>
-                          <FileDown className="w-4 h-4" />
-                          PDF
-                        </>
-                      )}
+                      <Download className="w-4 h-4" />
+                      Export
+                      <ChevronDown className={`w-4 h-4 transition-transform ${showExportDropdown ? 'rotate-180' : ''}`} />
                     </button>
+                    
+                    {showExportDropdown && (
+                      <div className="absolute right-0 mt-2 w-56 bg-white rounded-[16px] shadow-lg border border-slate-200 py-2 z-50">
+                        <button
+                          onClick={async () => {
+                            setShowExportDropdown(false);
+                            await handleExportPDF();
+                          }}
+                          disabled={exporting === 'pdf'}
+                          className="w-full px-4 py-2.5 text-left hover:bg-slate-50 flex items-center gap-3 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {exporting === 'pdf' ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin text-slate-600" />
+                              <span className="text-sm font-medium text-slate-600">Exporting PDF...</span>
+                            </>
+                          ) : (
+                            <>
+                              <FileDown className="w-4 h-4 text-slate-600" />
+                              <span className="text-sm font-medium text-slate-700">PDF</span>
+                            </>
+                          )}
+                        </button>
+                        <button
+                          onClick={async () => {
+                            setShowExportDropdown(false);
+                            await handleExportPPTX();
+                          }}
+                          disabled={exporting === 'pptx'}
+                          className="w-full px-4 py-2.5 text-left hover:bg-slate-50 flex items-center gap-3 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {exporting === 'pptx' ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin text-slate-600" />
+                              <span className="text-sm font-medium text-slate-600">Exporting PPTX...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Presentation className="w-4 h-4 text-orange-600" />
+                              <span className="text-sm font-medium text-slate-700">PPTX</span>
+                            </>
+                          )}
+                        </button>
+                        <div className="border-t border-slate-200 my-1"></div>
+                        <button
+                          onClick={async () => {
+                            setShowExportDropdown(false);
+                            await handleExportProject();
+                          }}
+                          disabled={exportingProject}
+                          className="w-full px-4 py-2.5 text-left hover:bg-slate-50 flex items-center gap-3 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {exportingProject ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin text-slate-600" />
+                              <span className="text-sm font-medium text-slate-600">Exporting Project...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Download className="w-4 h-4 text-indigo-600" />
+                              <span className="text-sm font-medium text-slate-700">Export Project (ZIP)</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
                   </div>
+                  
+                  {/* More Dropdown */}
+                  <div className="relative" data-dropdown-more>
+                    <button
+                      onClick={() => {
+                        setShowMoreDropdown(!showMoreDropdown);
+                        setShowExportDropdown(false);
+                      }}
+                      className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-black rounded-[20px] font-bold flex items-center gap-2 transition-all"
+                    >
+                      <MoreVertical className="w-4 h-4" />
+                      More
+                      <ChevronDown className={`w-4 h-4 transition-transform ${showMoreDropdown ? 'rotate-180' : ''}`} />
+                    </button>
+                    
+                    {showMoreDropdown && (
+                      <div className="absolute right-0 mt-2 w-56 bg-white rounded-[16px] shadow-lg border border-slate-200 py-2 z-50">
+                        <button
+                          onClick={() => {
+                            setShowMoreDropdown(false);
+                            setShowImportDialog(true);
+                          }}
+                          className="w-full px-4 py-2.5 text-left hover:bg-slate-50 flex items-center gap-3 transition-all"
+                        >
+                          <FileText className="w-4 h-4 text-slate-600" />
+                          <span className="text-sm font-medium text-slate-700">Import Text</span>
+                        </button>
+                        {deck.slides.length > 0 && (
+                          <button
+                            onClick={() => {
+                              setShowMoreDropdown(false);
+                              handleExportText();
+                            }}
+                            className="w-full px-4 py-2.5 text-left hover:bg-slate-50 flex items-center gap-3 transition-all"
+                          >
+                            <Download className="w-4 h-4 text-slate-600" />
+                            <span className="text-sm font-medium text-slate-700">Export Text</span>
+                          </button>
+                        )}
+                        <div className="border-t border-slate-200 my-1"></div>
+                        <button
+                          onClick={() => {
+                            setShowMoreDropdown(false);
+                            handleApprove();
+                          }}
+                          disabled={deck.slides.length === 0 || parseErrors.length > 0 || status === 'approved'}
+                          className="w-full px-4 py-2.5 text-left hover:bg-slate-50 flex items-center gap-3 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Locks the JSON (creates version snapshot)"
+                        >
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <span className="text-sm font-medium text-slate-700">Approve</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Global Visual Actions */}
+                <div className="flex items-center gap-3 mt-4 pt-4 border-t border-slate-200">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                    Visual Generation
+                  </span>
                   <button
-                    onClick={handleExportPPTX}
-                    disabled={deck.slides.length === 0 || exporting !== null}
-                    className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-[20px] font-bold flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Generated from JSON render pipeline"
+                    onClick={async () => {
+                      setGeneratingVisuals(true);
+                      try {
+                        // TODO: Implement visual generation for all slides
+                        const allVisuals = deck.slides.flatMap(slide => slide.visuals || []);
+                        if (allVisuals.length === 0) {
+                          alert('No visuals found in slides. Add visuals to slides first.');
+                          return;
+                        }
+                        alert(`Generate all visuals for ${allVisuals.length} visual(s) - to be implemented`);
+                      } catch (error) {
+                        console.error('Visual generation failed:', error);
+                        alert('Failed to generate visuals. Please try again.');
+                      } finally {
+                        setGeneratingVisuals(false);
+                      }
+                    }}
+                    disabled={deck.slides.length === 0 || generatingVisuals}
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-[20px] font-bold flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Generate visuals for all slides"
                   >
-                    {exporting === 'pptx' ? (
+                    {generatingVisuals ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        Exporting...
+                        Generating...
                       </>
                     ) : (
                       <>
-                        <Presentation className="w-4 h-4" />
-                        PPTX
+                        <Sparkles className="w-4 h-4" />
+                        Generate All Visuals
                       </>
                     )}
                   </button>
                   <button
-                    onClick={handleExportProject}
-                    disabled={deck.slides.length === 0 || exportingProject}
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[20px] font-bold flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Export project as ZIP (deck.json + diagrams + PDF/PPTX)"
+                    onClick={async () => {
+                      setDownloadingVisuals(true);
+                      try {
+                        // TODO: Implement download all visuals as ZIP
+                        const allVisuals = deck.slides.flatMap(slide => slide.visuals || []);
+                        if (allVisuals.length === 0) {
+                          alert('No visuals found in slides. Generate visuals first.');
+                          return;
+                        }
+                        alert(`Download all visuals (ZIP) for ${allVisuals.length} visual(s) - to be implemented`);
+                      } catch (error) {
+                        console.error('Visual download failed:', error);
+                        alert('Failed to download visuals. Please try again.');
+                      } finally {
+                        setDownloadingVisuals(false);
+                      }
+                    }}
+                    disabled={deck.slides.length === 0 || downloadingVisuals}
+                    className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-[20px] font-bold flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Download all visuals as ZIP (SVG/PNG)"
                   >
-                    {exportingProject ? (
+                    {downloadingVisuals ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        Exporting...
+                        Downloading...
                       </>
                     ) : (
                       <>
-                        <Download className="w-4 h-4" />
-                        Export Project
+                        <FileImage className="w-4 h-4" />
+                        Download All Visuals (ZIP)
                       </>
                     )}
                   </button>
@@ -717,6 +858,14 @@ export const Proposal: React.FC<ProposalProps> = ({
                     selectedSlideId={selectedSlideId}
                     onSelectSlide={setSelectedSlideId}
                     onAddSlide={handleAddSlide}
+                    onEnterPress={() => {
+                      // Focus the title input when Enter is pressed
+                      const titleInput = document.querySelector('[data-slide-title-input]') as HTMLInputElement;
+                      if (titleInput) {
+                        titleInput.focus();
+                        titleInput.select();
+                      }
+                    }}
                   />
                   <GlobalStylingPanel
                     deck={deck}
@@ -736,6 +885,18 @@ export const Proposal: React.FC<ProposalProps> = ({
                       const slideIndex = deck.slides.findIndex(s => s.id === selectedSlideId);
                       if (!slide) return null;
                       
+                      const handlePrevious = () => {
+                        if (slideIndex > 0) {
+                          setSelectedSlideId(deck.slides[slideIndex - 1].id);
+                        }
+                      };
+                      
+                      const handleNext = () => {
+                        if (slideIndex < deck.slides.length - 1) {
+                          setSelectedSlideId(deck.slides[slideIndex + 1].id);
+                        }
+                      };
+                      
                       return (
                         <SlideCard
                           slide={slide}
@@ -748,6 +909,8 @@ export const Proposal: React.FC<ProposalProps> = ({
                           onDuplicate={() => handleDuplicateSlide(slide.id)}
                           onMoveUp={() => handleMoveSlide(slide.id, 'up')}
                           onMoveDown={() => handleMoveSlide(slide.id, 'down')}
+                          onPrevious={handlePrevious}
+                          onNext={handleNext}
                         />
                       );
                     })()
