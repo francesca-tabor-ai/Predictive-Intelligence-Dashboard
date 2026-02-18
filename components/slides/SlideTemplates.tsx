@@ -9,6 +9,7 @@ interface SlideTemplateProps {
 
 /**
  * Base slide canvas component
+ * Uses Pure White background with Intelligence-First branding
  */
 const SlideCanvas: React.FC<{ children: React.ReactNode; className?: string }> = ({ 
   children, 
@@ -16,10 +17,11 @@ const SlideCanvas: React.FC<{ children: React.ReactNode; className?: string }> =
 }) => {
   return (
     <div 
-      className={`slide-canvas bg-white min-h-screen p-16 flex flex-col ${className}`}
+      className={`slide-canvas bg-white min-h-screen flex flex-col ${className}`}
       style={{
-        fontFamily: theme.fonts.title,
-        padding: `${theme.layout.margin}px`
+        fontFamily: theme.fonts.primary,
+        padding: `${theme.layout.slidePadding}px`,
+        background: theme.colors.pureWhite
       }}
     >
       {children}
@@ -28,7 +30,8 @@ const SlideCanvas: React.FC<{ children: React.ReactNode; className?: string }> =
 };
 
 /**
- * Title component
+ * Title component - Display Headers
+ * font-black text-6xl tracking-tight (Obsidian)
  */
 const Title: React.FC<{ children: React.ReactNode; className?: string }> = ({ 
   children, 
@@ -36,12 +39,13 @@ const Title: React.FC<{ children: React.ReactNode; className?: string }> = ({
 }) => {
   return (
     <h1 
-      className={`mb-6 text-black ${className}`}
+      className={`mb-6 ${className}`}
       style={{
-        fontSize: theme.typography.display.fontSize,
+        fontSize: `${theme.typography.display.fontSize}px`,
         fontWeight: theme.typography.display.fontWeight,
         letterSpacing: `${theme.typography.display.letterSpacing}em`,
-        lineHeight: theme.typography.display.lineHeight
+        lineHeight: theme.typography.display.lineHeight,
+        color: theme.typography.display.color
       }}
     >
       {children}
@@ -51,15 +55,18 @@ const Title: React.FC<{ children: React.ReactNode; className?: string }> = ({
 
 /**
  * Section header component
+ * font-bold text-2xl tracking-tight (Obsidian)
  */
 const SectionHeader: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <h2 
-      className="mb-4 text-black"
+      className="mb-4"
       style={{
-        fontSize: theme.typography.section.fontSize,
+        fontSize: `${theme.typography.section.fontSize}px`,
         fontWeight: theme.typography.section.fontWeight,
-        lineHeight: theme.typography.section.lineHeight
+        letterSpacing: `${theme.typography.section.letterSpacing}em`,
+        lineHeight: theme.typography.section.lineHeight,
+        color: theme.typography.section.color
       }}
     >
       {children}
@@ -69,6 +76,7 @@ const SectionHeader: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
 /**
  * Body text component
+ * font-light text-lg leading-relaxed text-slate-600
  */
 const BodyText: React.FC<{ children: React.ReactNode; className?: string }> = ({ 
   children, 
@@ -78,7 +86,7 @@ const BodyText: React.FC<{ children: React.ReactNode; className?: string }> = ({
     <p 
       className={`mb-4 ${className}`}
       style={{
-        fontSize: theme.typography.body.fontSize,
+        fontSize: `${theme.typography.body.fontSize}px`,
         fontWeight: theme.typography.body.fontWeight,
         lineHeight: theme.typography.body.lineHeight,
         color: theme.typography.body.color
@@ -91,6 +99,7 @@ const BodyText: React.FC<{ children: React.ReactNode; className?: string }> = ({
 
 /**
  * Bullet list component
+ * Uses body typography with proper spacing
  */
 const BulletList: React.FC<{ items: string[]; className?: string }> = ({ 
   items, 
@@ -100,11 +109,11 @@ const BulletList: React.FC<{ items: string[]; className?: string }> = ({
     <ul 
       className={`space-y-3 ${className}`}
       style={{
-        fontSize: theme.typography.body.fontSize,
+        fontSize: `${theme.typography.body.fontSize}px`,
         fontWeight: theme.typography.body.fontWeight,
         lineHeight: theme.typography.body.lineHeight,
         color: theme.typography.body.color,
-        paddingLeft: theme.spacing.md
+        paddingLeft: theme.layout.spacing.gap12
       }}
     >
       {items.map((item, index) => (
@@ -118,6 +127,7 @@ const BulletList: React.FC<{ items: string[]; className?: string }> = ({
 
 /**
  * Two column layout
+ * Uses gap-12 (48px) for breathing room
  */
 const TwoColumn: React.FC<{ 
   left: React.ReactNode; 
@@ -125,7 +135,12 @@ const TwoColumn: React.FC<{
   className?: string;
 }> = ({ left, right, className = '' }) => {
   return (
-    <div className={`grid grid-cols-2 gap-12 ${className}`}>
+    <div 
+      className={`grid grid-cols-2 ${className}`}
+      style={{
+        gap: `${theme.layout.spacing.gap12}px`
+      }}
+    >
       <div>{left}</div>
       <div>{right}</div>
     </div>
@@ -134,6 +149,7 @@ const TwoColumn: React.FC<{
 
 /**
  * Highlight panel component
+ * Uses executive panel styling with shadow-2xl
  */
 const HighlightPanel: React.FC<{ 
   items: Array<{ label: string; value: string }>;
@@ -143,30 +159,33 @@ const HighlightPanel: React.FC<{
     <div 
       className={`space-y-4 ${className}`}
       style={{
-        background: theme.colors.surface,
-        padding: theme.spacing.md,
-        borderRadius: `${theme.layout.borderRadius.panel}px`,
-        border: `1px solid ${theme.colors.text.muted}`
+        background: theme.colors.pureWhite,
+        padding: `${theme.layout.spacing.gap12}px`,
+        borderRadius: `${theme.layout.borderRadius.executive}px`,
+        border: `1px solid ${theme.colors.coolGrey.medium}`,
+        boxShadow: theme.shadows.executive
       }}
     >
       {items.map((item, index) => (
         <div key={index} className="space-y-1">
           <div 
-            className="text-slate-400"
             style={{
-              fontSize: theme.typography.metadata.fontSize,
+              fontSize: `${theme.typography.metadata.fontSize}px`,
               fontWeight: theme.typography.metadata.fontWeight,
               textTransform: theme.typography.metadata.textTransform,
-              letterSpacing: `${theme.typography.metadata.letterSpacing}em`
+              letterSpacing: `${theme.typography.metadata.letterSpacing}em`,
+              color: theme.typography.metadata.color
             }}
           >
             {item.label}
           </div>
           <div 
-            className="text-black font-bold"
             style={{
-              fontSize: theme.typography.section.fontSize,
-              fontFamily: theme.fonts.mono
+              fontSize: `${theme.typography.section.fontSize}px`,
+              fontWeight: theme.typography.section.fontWeight,
+              fontFamily: theme.typography.data.fontFamily,
+              letterSpacing: `${theme.typography.data.letterSpacing}em`,
+              color: theme.typography.display.color
             }}
           >
             {item.value}
@@ -179,13 +198,14 @@ const HighlightPanel: React.FC<{
 
 /**
  * Metadata label component
+ * font-bold text-[10px] uppercase tracking-[0.2em] text-slate-400
  */
 const MetadataLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <div 
       className="mb-2"
       style={{
-        fontSize: theme.typography.metadata.fontSize,
+        fontSize: `${theme.typography.metadata.fontSize}px`,
         fontWeight: theme.typography.metadata.fontWeight,
         textTransform: theme.typography.metadata.textTransform,
         letterSpacing: `${theme.typography.metadata.letterSpacing}em`,
@@ -199,6 +219,7 @@ const MetadataLabel: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
 /**
  * Accent line component
+ * Intelligence Gradient (135°): Indigo → Purple → Pink → Orange
  */
 const AccentLine: React.FC = () => {
   return (
@@ -207,7 +228,7 @@ const AccentLine: React.FC = () => {
       style={{
         width: '32px',
         height: '2px',
-        background: `linear-gradient(135deg, ${theme.colors.gradient.start} 0%, ${theme.colors.gradient.mid} 50%, ${theme.colors.gradient.end} 100%)`
+        background: `linear-gradient(135deg, ${theme.colors.gradient.indigo} 0%, ${theme.colors.gradient.purple} 33%, ${theme.colors.gradient.pink} 66%, ${theme.colors.gradient.orange} 100%)`
       }}
     />
   );

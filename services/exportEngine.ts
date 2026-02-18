@@ -15,10 +15,10 @@ function generateSlideHTML(slide: Slide, index: number): string {
   // Generate highlights HTML
   const highlightsHTML = hasHighlights ? slide.highlights!.map(highlight => `
           <div style="margin-bottom: 16px;">
-            <div style="font-size: ${theme.typography.metadata.fontSize}px; font-weight: ${theme.typography.metadata.fontWeight}; text-transform: uppercase; letter-spacing: ${theme.typography.metadata.letterSpacing}em; color: ${theme.colors.text.muted}; margin-bottom: 4px;">
+            <div style="font-size: ${theme.typography.metadata.fontSize}px; font-weight: ${theme.typography.metadata.fontWeight}; text-transform: uppercase; letter-spacing: ${theme.typography.metadata.letterSpacing}em; color: ${theme.typography.metadata.color}; margin-bottom: 4px;">
               ${escapeHtml(highlight.label)}
             </div>
-            <div style="font-size: ${theme.typography.section.fontSize}px; font-weight: 700; font-family: ${theme.fonts.mono}; color: ${theme.colors.text.primary};">
+            <div style="font-size: ${theme.typography.section.fontSize}px; font-weight: ${theme.typography.section.fontWeight}; font-family: ${theme.typography.data.fontFamily}; letter-spacing: ${theme.typography.data.letterSpacing}em; color: ${theme.typography.display.color};">
               ${escapeHtml(highlight.value)}
             </div>
           </div>
@@ -28,30 +28,30 @@ function generateSlideHTML(slide: Slide, index: number): string {
   let contentHTML = '';
   if (hasHighlights) {
     contentHTML = `
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: ${theme.spacing.lg}px;">
-          <ul style="font-size: ${theme.typography.body.fontSize}px; font-weight: ${theme.typography.body.fontWeight}; line-height: ${theme.typography.body.lineHeight}; color: ${theme.typography.body.color}; padding-left: ${theme.spacing.md}px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: ${theme.layout.spacing.gap12}px;">
+          <ul style="font-size: ${theme.typography.body.fontSize}px; font-weight: ${theme.typography.body.fontWeight}; line-height: ${theme.typography.body.lineHeight}; color: ${theme.typography.body.color}; padding-left: ${theme.layout.spacing.gap12}px;">
             ${bodyHTML}
           </ul>
-          <div style="background: ${theme.colors.surface}; padding: ${theme.spacing.md}px; border-radius: ${theme.layout.borderRadius.panel}px; border: 1px solid ${theme.colors.text.muted};">
+          <div style="background: ${theme.colors.pureWhite}; padding: ${theme.layout.spacing.gap12}px; border-radius: ${theme.layout.borderRadius.executive}px; border: 1px solid ${theme.colors.coolGrey.medium}; box-shadow: ${theme.shadows.executive};">
             ${highlightsHTML}
           </div>
         </div>
       `;
   } else {
     contentHTML = `
-        <ul style="font-size: ${theme.typography.body.fontSize}px; font-weight: ${theme.typography.body.fontWeight}; line-height: ${theme.typography.body.lineHeight}; color: ${theme.typography.body.color}; padding-left: ${theme.spacing.md}px;">
+        <ul style="font-size: ${theme.typography.body.fontSize}px; font-weight: ${theme.typography.body.fontWeight}; line-height: ${theme.typography.body.lineHeight}; color: ${theme.typography.body.color}; padding-left: ${theme.layout.spacing.gap12}px;">
           ${bodyHTML}
         </ul>
       `;
   }
   
   return `
-    <div class="slide-canvas" style="min-height: 100vh; padding: ${theme.layout.margin}px; display: flex; flex-direction: column; background: ${theme.colors.background};">
-      <div style="width: 32px; height: 2px; background: linear-gradient(135deg, ${theme.colors.gradient.start} 0%, ${theme.colors.gradient.mid} 50%, ${theme.colors.gradient.end} 100%); margin-bottom: 24px;"></div>
+    <div class="slide-canvas" style="min-height: 100vh; padding: ${theme.layout.slidePadding}px; display: flex; flex-direction: column; background: ${theme.colors.pureWhite}; font-family: ${theme.fonts.primary};">
+      <div style="width: 32px; height: 2px; background: linear-gradient(135deg, ${theme.colors.gradient.indigo} 0%, ${theme.colors.gradient.purple} 33%, ${theme.colors.gradient.pink} 66%, ${theme.colors.gradient.orange} 100%); margin-bottom: 24px;"></div>
       <div style="font-size: ${theme.typography.metadata.fontSize}px; font-weight: ${theme.typography.metadata.fontWeight}; text-transform: uppercase; letter-spacing: ${theme.typography.metadata.letterSpacing}em; color: ${theme.typography.metadata.color}; margin-bottom: 16px;">
         Slide ${index + 1}
       </div>
-      <h1 style="font-weight: ${theme.typography.display.fontWeight}; font-size: ${theme.typography.display.fontSize}px; letter-spacing: ${theme.typography.display.letterSpacing}em; line-height: ${theme.typography.display.lineHeight}; margin-bottom: 24px; color: ${theme.colors.text.primary};">
+      <h1 style="font-weight: ${theme.typography.display.fontWeight}; font-size: ${theme.typography.display.fontSize}px; letter-spacing: ${theme.typography.display.letterSpacing}em; line-height: ${theme.typography.display.lineHeight}; margin-bottom: 24px; color: ${theme.typography.display.color};">
         ${escapeHtml(slide.title)}
       </h1>
       <div style="flex: 1;">
@@ -105,17 +105,18 @@ export async function exportToPDF(slides: Slide[], filename: string): Promise<vo
     }
     body {
       font-family: 'Inter', sans-serif;
-      background: ${theme.colors.background};
-      color: ${theme.colors.text.primary};
+      background: ${theme.colors.pureWhite};
+      color: ${theme.colors.obsidian};
       line-height: 1.6;
     }
     .slide-canvas {
       min-height: 100vh;
-      padding: ${theme.layout.margin}px;
+      padding: ${theme.layout.slidePadding}px;
       display: flex;
       flex-direction: column;
       justify-content: flex-start;
-      background: ${theme.colors.background};
+      background: ${theme.colors.pureWhite};
+      font-family: ${theme.fonts.primary};
     }
     h1 {
       font-weight: ${theme.typography.display.fontWeight};
@@ -123,14 +124,14 @@ export async function exportToPDF(slides: Slide[], filename: string): Promise<vo
       letter-spacing: ${theme.typography.display.letterSpacing}em;
       line-height: ${theme.typography.display.lineHeight};
       margin-bottom: 24px;
-      color: ${theme.colors.text.primary};
+      color: ${theme.colors.obsidian};
     }
     h2 {
       font-weight: ${theme.typography.section.fontWeight};
       font-size: ${theme.typography.section.fontSize}px;
       line-height: ${theme.typography.section.lineHeight};
       margin-bottom: 16px;
-      color: ${theme.colors.text.primary};
+      color: ${theme.colors.obsidian};
     }
     p {
       font-weight: ${theme.typography.body.fontWeight};
@@ -144,7 +145,7 @@ export async function exportToPDF(slides: Slide[], filename: string): Promise<vo
       font-size: ${theme.typography.body.fontSize}px;
       line-height: ${theme.typography.body.lineHeight};
       color: ${theme.typography.body.color};
-      margin-left: ${theme.spacing.md}px;
+      margin-left: ${theme.layout.spacing.gap12}px;
       margin-bottom: 16px;
     }
     li {
@@ -157,7 +158,7 @@ export async function exportToPDF(slides: Slide[], filename: string): Promise<vo
       grid-template-columns: repeat(2, 1fr);
     }
     .gap-12 {
-      gap: ${theme.spacing.lg}px;
+      gap: ${theme.layout.spacing.gap12}px;
     }
     .space-y-3 > * + * {
       margin-top: 12px;
@@ -230,25 +231,25 @@ export async function exportToPowerPoint(slides: Slide[], filename: string): Pro
         y: 0.2,
         w: 2,
         h: 0.3,
-        fontSize: 10,
-        color: theme.colors.text.muted.replace('#', ''),
-        fontFace: theme.fonts.title,
+        fontSize: theme.typography.metadata.fontSize,
+        color: theme.typography.metadata.color.replace('#', ''),
+        fontFace: theme.fonts.primary,
         bold: true
       });
 
-      // Add title
+      // Add title (Display Header - font-black text-6xl)
       slideObj.addText(slide.title, {
         x: 0.5,
         y: 0.5,
         w: 9,
         h: 0.8,
-        fontSize: 36,
-        fontFace: theme.fonts.title,
+        fontSize: theme.typography.display.fontSize,
+        fontFace: theme.fonts.primary,
         bold: true,
-        color: theme.colors.text.primary.replace('#', '')
+        color: theme.typography.display.color.replace('#', '')
       });
 
-      // Add body content
+      // Add body content (font-light text-lg)
       let yPosition = 1.5;
       slide.body.forEach((line, lineIndex) => {
         slideObj.addText(line, {
@@ -256,8 +257,8 @@ export async function exportToPowerPoint(slides: Slide[], filename: string): Pro
           y: yPosition,
           w: slide.highlights && slide.highlights.length > 0 ? 4.5 : 9,
           h: 0.4,
-          fontSize: 14,
-          fontFace: theme.fonts.body,
+          fontSize: theme.typography.body.fontSize,
+          fontFace: theme.fonts.primary,
           color: theme.typography.body.color.replace('#', ''),
           bullet: true
         });
@@ -268,27 +269,27 @@ export async function exportToPowerPoint(slides: Slide[], filename: string): Pro
       if (slide.highlights && slide.highlights.length > 0) {
         let highlightY = 1.5;
         slide.highlights.forEach((highlight) => {
-          // Highlight label
+          // Highlight label (Metadata style)
           slideObj.addText(highlight.label, {
             x: 5.5,
             y: highlightY,
             w: 4,
             h: 0.3,
-            fontSize: 10,
-            fontFace: theme.fonts.title,
-            color: theme.colors.text.muted.replace('#', ''),
+            fontSize: theme.typography.metadata.fontSize,
+            fontFace: theme.fonts.primary,
+            color: theme.typography.metadata.color.replace('#', ''),
             bold: true
           });
           
-          // Highlight value
+          // Highlight value (Data style - font-mono)
           slideObj.addText(highlight.value, {
             x: 5.5,
             y: highlightY + 0.3,
             w: 4,
             h: 0.4,
-            fontSize: 18,
-            fontFace: theme.fonts.mono,
-            color: theme.colors.text.primary.replace('#', ''),
+            fontSize: theme.typography.section.fontSize,
+            fontFace: theme.typography.data.fontFamily,
+            color: theme.typography.display.color.replace('#', ''),
             bold: true
           });
           
@@ -296,7 +297,7 @@ export async function exportToPowerPoint(slides: Slide[], filename: string): Pro
         });
       }
 
-      // Add accent line
+      // Add accent line (Intelligence Gradient)
       slideObj.addShape(pptx.ShapeType.rect, {
         x: 0.5,
         y: 0.4,
@@ -304,7 +305,7 @@ export async function exportToPowerPoint(slides: Slide[], filename: string): Pro
         h: 0.05,
         fill: {
           type: 'solid',
-          color: theme.colors.gradient.start.replace('#', '')
+          color: theme.colors.gradient.indigo.replace('#', '')
         }
       });
     });
