@@ -27,7 +27,8 @@ function convertSchemaToOpenAI(schema: any): any {
     const result: any = {
       type: "object",
       properties: {},
-      required: schema.required || []
+      required: schema.required || [],
+      additionalProperties: false
     };
     
     if (schema.properties) {
