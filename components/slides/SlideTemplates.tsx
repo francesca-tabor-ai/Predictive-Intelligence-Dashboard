@@ -284,19 +284,126 @@ export const ExecutiveSummaryTemplate: React.FC<SlideTemplateProps> = ({ slide, 
 
 /**
  * Architecture Template
+ * Two-column layout: diagram on left, layer descriptions on right
  */
 export const ArchitectureTemplate: React.FC<SlideTemplateProps> = ({ slide, slideNumber }) => {
+  // Parse layer descriptions from body content
+  // Format: **Layer Name** followed by description
+  const parseLayers = (body: string[]): Array<{ name: string; description: string }> => {
+    const layers: Array<{ name: string; description: string }> = [];
+    let currentLayer: { name: string; description: string } | null = null;
+
+    body.forEach((line) => {
+      // Check if line is a bold header (starts with ** and ends with **)
+      const boldMatch = line.match(/^\*\*(.+?)\*\*$/);
+      if (boldMatch) {
+        // Save previous layer if exists
+        if (currentLayer) {
+          layers.push(currentLayer);
+        }
+        // Start new layer
+        currentLayer = {
+          name: boldMatch[1].trim(),
+          description: ''
+        };
+      } else if (currentLayer && line.trim()) {
+        // Add description to current layer
+        if (currentLayer.description) {
+          currentLayer.description += ' ' + line.trim();
+        } else {
+          currentLayer.description = line.trim();
+        }
+      }
+    });
+
+    // Add last layer if exists
+    if (currentLayer) {
+      layers.push(currentLayer);
+    }
+
+    return layers;
+  };
+
+  const layers = parseLayers(slide.body);
+
+  // Visual diagram placeholder component
+  const ArchitectureDiagram: React.FC = () => {
+    return (
+      <div 
+        className="h-full flex items-center justify-center"
+        style={{
+          background: theme.colors.coolGrey.light,
+          borderRadius: `${theme.layout.borderRadius.executive}px`,
+          border: `1px solid ${theme.colors.coolGrey.medium}`,
+          minHeight: '400px'
+        }}
+      >
+        <div className="text-center space-y-4">
+          <div 
+            style={{
+              fontSize: `${theme.typography.metadata.fontSize}px`,
+              fontWeight: theme.typography.metadata.fontWeight,
+              textTransform: theme.typography.metadata.textTransform,
+              letterSpacing: `${theme.typography.metadata.letterSpacing}em`,
+              color: theme.typography.metadata.color
+            }}
+          >
+            Layered Architecture Diagram
+          </div>
+          <div 
+            style={{
+              fontSize: `${theme.typography.body.fontSize}px`,
+              fontWeight: theme.typography.body.fontWeight,
+              color: theme.typography.body.color
+            }}
+          >
+            Visual diagram illustrating the layered architecture
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Layer descriptions component
+  const LayerDescriptions: React.FC = () => {
+    if (layers.length === 0) {
+      // Fallback to bullet list if no layers parsed
+      return <BulletList items={slide.body} />;
+    }
+
+    return (
+      <div className="space-y-6">
+        {layers.map((layer, index) => (
+          <div key={index} className="space-y-2">
+            <h3 
+              style={{
+                fontSize: `${theme.typography.section.fontSize}px`,
+                fontWeight: theme.typography.section.fontWeight,
+                color: theme.typography.section.color
+              }}
+            >
+              {layer.name}
+            </h3>
+            {layer.description && (
+              <BodyText className="mb-0">{layer.description}</BodyText>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <SlideCanvas>
       <AccentLine />
       <MetadataLabel>Slide {slideNumber || 1}</MetadataLabel>
       <Title>{slide.title}</Title>
       
-      <div className="flex-1 space-y-6">
-        <BulletList items={slide.body} />
-        {slide.highlights && slide.highlights.length > 0 && (
-          <HighlightPanel items={slide.highlights} />
-        )}
+      <div className="flex-1">
+        <TwoColumn
+          left={<ArchitectureDiagram />}
+          right={<LayerDescriptions />}
+        />
       </div>
     </SlideCanvas>
   );

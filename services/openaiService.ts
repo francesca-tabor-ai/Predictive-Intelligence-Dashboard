@@ -876,13 +876,28 @@ Ensure the slide uses bold headers for use cases and indented sub-bullets only, 
 
 Slide 6: AI Platform Architecture
 
-Layered architecture diagram:
+Use a two-column layout:
+- Left column: Visual architecture diagram (layered architecture illustration)
+- Right column: Layer descriptions formatted as bold headers with descriptions
 
-Data Layer  
-Feature Store  
-Training  
-Inference  
-Feedback Loop
+IMPORTANT: Do NOT include any heading text like "Layered Architecture Diagram:" or "Optional Visual Components:" in the slide body content. Only include the layer descriptions below.
+
+Format the right column content exactly as follows (each layer as a bold header followed by its description on the next line):
+
+**Data Layer**
+Unified data repository for high-quality, real-time data
+
+**Feature Store**
+Standardized feature engineering for model reuse
+
+**Training**
+Scalable platform for rapid model iteration
+
+**Inference**
+Real-time prediction delivery
+
+**Feedback Loop**
+Continuous model refinement
 
 ---
 
