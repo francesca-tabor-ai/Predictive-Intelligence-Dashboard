@@ -15,7 +15,10 @@ const getAI = () => {
   if (!apiKey) {
     throw new Error("OpenAI API key is not set. Please set OPENAI_API_KEY environment variable.");
   }
-  return new OpenAI({ apiKey });
+  return new OpenAI({ 
+    apiKey,
+    dangerouslyAllowBrowser: true 
+  });
 };
 
 // Helper function to convert schema from Google format to OpenAI JSON Schema format
