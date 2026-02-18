@@ -43,12 +43,17 @@ function convertSchemaToOpenAI(schema: any): any {
 }
 
 function convertPropertyToOpenAI(prop: any): any {
+  if (!prop || typeof prop !== 'object') {
+    return prop;
+  }
+  
   if (prop.type === Type.ARRAY) {
     return {
       type: "array",
       items: prop.items ? convertPropertyToOpenAI(prop.items) : {}
     };
   } else if (prop.type === Type.OBJECT) {
+    // Recursively convert nested objects - convertSchemaToOpenAI already sets additionalProperties: false
     return convertSchemaToOpenAI(prop);
   } else if (prop.type === Type.STRING) {
     const result: any = { type: "string" };
@@ -557,13 +562,19 @@ Required Output Structure (Strict JSON):
     required: ["executiveSummary", "economicEngine", "scores", "intelligenceMultiplier", "compoundingRate", "valuation", "defensibility", "flywheelStrength", "recommendation"]
   };
 
+  // Convert schema and ensure additionalProperties is false at root level
+  const convertedSchema = convertSchemaToOpenAI(responseSchema);
+  if (convertedSchema && convertedSchema.type === "object") {
+    convertedSchema.additionalProperties = false;
+  }
+
   const response = await ai.chat.completions.create({
     model: "gpt-4o",
     messages: [
       { role: "system", content: systemInstruction },
       { role: "user", content: `Analyze the following business for a comprehensive ICVF valuation: ${details}` }
     ],
-    response_format: { type: "json_schema", json_schema: { name: "valuation_response", strict: true, schema: convertSchemaToOpenAI(responseSchema) } },
+    response_format: { type: "json_schema", json_schema: { name: "valuation_response", strict: true, schema: convertedSchema } },
     temperature: 0.7
   });
 
